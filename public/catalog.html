@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catalogue Produits - TechFlow</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #13131a;
+            --surface2: #1c1c28;
+            --border: rgba(255,255,255,0.07);
+            --accent: #f0c040;
+            --accent2: #e07830;
+            --text: #f0ede8;
+            --text-dim: #8888a0;
+            --text-faint: #44445a;
+            --green: #30d090;
+            --red: #f05060;
+            --orange: #f09030;
+            --radius: 14px;
+            --radius-sm: 8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(240,192,64,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(240,192,64,0.03) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ─── HEADER ─── */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10,10,15,0.88);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px;
+        }
+
+        .header-inner {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            height: 68px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .logo-mark {
+            width: 38px;
+            height: 38px;
+            background: var(--accent);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0a0a0f;
+            font-size: 16px;
+        }
+
+        .logo-text {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--text);
+            letter-spacing: -0.3px;
+        }
+
+        .logo-sub {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 10px;
+            font-weight: 400;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            display: block;
+            line-height: 1;
+            margin-top: 2px;
+        }
+
+        .header-divider {
+            width: 1px;
+            height: 32px;
+            background: var(--border);
+            flex-shrink: 0;
+        }
+
+        .search-wrap {
+            flex: 1;
+            position: relative;
+            max-width: 480px;
+        }
+
+        .search-wrap i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            height: 42px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 0 20px 0 42px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .search-input::placeholder { color: var(--text-faint); }
+
+        .search-input:focus {
+            border-color: rgba(240,192,64,0.4);
+            box-shadow: 0 0 0 3px rgba(240,192,64,0.08);
+        }
+
+        .header-stats {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .stat-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-dim);
+            background: var(--surface);
+            padding: 6px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .stat-pill:hover {
+            background: var(--surface2);
+            border-color: rgba(240,192,64,0.3);
+            transform: translateY(-1px);
+        }
+
+        .stat-pill i { font-size: 12px; }
+
+        .stat-pill span {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--text);
+        }
+
+        .stat-pill.low-stock-pill:hover { border-color: var(--orange); background: rgba(240,144,48,0.1); }
+        .stat-pill.out-stock-pill:hover { border-color: var(--red); background: rgba(240,80,96,0.1); }
+        .stat-pill.active-filter { background: rgba(240,192,64,0.15); border-color: var(--accent); }
+        .stat-pill.low-stock-pill.active-filter { background: rgba(240,144,48,0.2); border-color: var(--orange); }
+        .stat-pill.out-stock-pill.active-filter { background: rgba(240,80,96,0.2); border-color: var(--red); }
+
+        /* ══ LIVE INDICATOR ══ */
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-dim);
+            padding: 6px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            flex-shrink: 0;
+            transition: all 0.4s ease;
+            user-select: none;
+        }
+
+        .live-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--text-faint);
+            transition: background 0.4s ease;
+            flex-shrink: 0;
+        }
+
+        .live-indicator.connected .live-dot {
+            background: var(--green);
+            animation: livePulse 2s ease-in-out infinite;
+        }
+
+        .live-indicator.connected {
+            border-color: rgba(48,208,144,0.25);
+            color: var(--green);
+        }
+
+        .live-indicator.reconnecting .live-dot {
+            background: var(--orange);
+            animation: livePulse 0.8s ease-in-out infinite;
+        }
+
+        .live-indicator.reconnecting {
+            border-color: rgba(240,144,48,0.25);
+            color: var(--orange);
+        }
+
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%       { opacity: 0.5; transform: scale(1.3); }
+        }
+
+        /* ══ TOAST LIVE UPDATE ══ */
+        .update-toast {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--surface);
+            border: 1px solid rgba(240,192,64,0.3);
+            border-radius: 999px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--text);
+            z-index: 200;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .update-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .update-toast i { color: var(--accent); font-size: 14px; }
+
+        /* ══ FLASH ANIMATION sur carte mise à jour ══ */
+        @keyframes stockFlashUp {
+            0%   { box-shadow: 0 0 0 0 rgba(48,208,144,0); }
+            30%  { box-shadow: 0 0 0 6px rgba(48,208,144,0.35); }
+            100% { box-shadow: 0 0 0 0 rgba(48,208,144,0); }
+        }
+
+        @keyframes stockFlashDown {
+            0%   { box-shadow: 0 0 0 0 rgba(240,80,96,0); }
+            30%  { box-shadow: 0 0 0 6px rgba(240,80,96,0.35); }
+            100% { box-shadow: 0 0 0 0 rgba(240,80,96,0); }
+        }
+
+        @keyframes stockFlashUpdate {
+            0%   { box-shadow: 0 0 0 0 rgba(240,192,64,0); }
+            30%  { box-shadow: 0 0 0 6px rgba(240,192,64,0.4); }
+            100% { box-shadow: 0 0 0 0 rgba(240,192,64,0); }
+        }
+
+        .card-flash-up   { animation: stockFlashUp   0.9s ease; }
+        .card-flash-down { animation: stockFlashDown 0.9s ease; }
+        .card-flash-update { animation: stockFlashUpdate 0.9s ease; }
+
+        /* Transition douce pour le badge de stock */
+        .stock-badge { transition: background 0.4s ease, color 0.4s ease; }
+
+        /* ══ BOUTON LOGIN ══ */
+        .btn-login-header {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 20px;
+            height: 38px;
+            border-radius: 999px;
+            background: var(--accent);
+            color: #0a0a0f;
+            font-family: 'Syne', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-login-header:hover {
+            background: #ffd060;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(240,192,64,0.35);
+        }
+
+        /* ══ FAB ══ */
+        .fab-login {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            gap: 0;
+            overflow: hidden;
+            height: 52px;
+            border-radius: 999px;
+            background: var(--accent);
+            color: #0a0a0f;
+            font-family: 'Syne', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(20px) scale(0.9);
+            pointer-events: none;
+            transition: opacity 0.3s cubic-bezier(.22,.68,0,1.2), transform 0.3s cubic-bezier(.22,.68,0,1.2), box-shadow 0.2s ease, width 0.35s cubic-bezier(.22,.68,0,1.2), gap 0.35s ease;
+            width: 52px;
+            box-shadow: 0 8px 28px rgba(240,192,64,0.3), 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        .fab-login.visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; animation: fabPulse 3s ease-in-out infinite; }
+        .fab-login:hover { width: 168px; gap: 10px; box-shadow: 0 12px 36px rgba(240,192,64,0.45), 0 4px 12px rgba(0,0,0,0.5); background: #ffd060; animation: none; }
+        .fab-login:active { transform: scale(0.96); }
+
+        .fab-icon { width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 18px; }
+
+        .fab-label { white-space: nowrap; overflow: hidden; max-width: 0; opacity: 0; transition: max-width 0.3s cubic-bezier(.22,.68,0,1.2), opacity 0.2s ease; font-size: 14px; letter-spacing: 0.1px; }
+        .fab-login:hover .fab-label { max-width: 120px; opacity: 1; transition: max-width 0.35s cubic-bezier(.22,.68,0,1.2), opacity 0.25s ease 0.08s; }
+
+        @keyframes fabPulse {
+            0%, 100% { box-shadow: 0 8px 28px rgba(240,192,64,0.3), 0 2px 8px rgba(0,0,0,0.4); }
+            50%       { box-shadow: 0 8px 36px rgba(240,192,64,0.55), 0 2px 8px rgba(0,0,0,0.4); }
+        }
+
+        /* ─── MAIN ─── */
+        .main { position: relative; z-index: 1; max-width: 1600px; margin: 0 auto; padding: 32px 32px 80px; }
+
+        .section-label { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-faint); margin-bottom: 12px; }
+
+        .categories-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 36px; }
+
+        .cat-btn { display: flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.18s; white-space: nowrap; }
+        .cat-btn:hover { border-color: rgba(240,192,64,0.3); color: var(--text); }
+        .cat-btn.active { background: var(--accent); border-color: var(--accent); color: #0a0a0f; font-weight: 600; }
+        .cat-btn .cat-count { background: rgba(255,255,255,0.15); padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+        .cat-btn.active .cat-count { background: rgba(0,0,0,0.2); }
+
+        .filter-status-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .active-filter-badge { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .filter-chip { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; font-size: 12px; color: var(--text-dim); }
+        .clear-filters-btn { background: none; border: none; color: var(--accent); font-size: 12px; cursor: pointer; padding: 4px 12px; border-radius: 999px; transition: background 0.2s; }
+        .clear-filters-btn:hover { background: rgba(240,192,64,0.1); }
+
+        .products-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 24px 20px; }
+
+        .product-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: transform 0.22s cubic-bezier(.22,.68,0,1.2), border-color 0.2s, box-shadow 0.22s; position: relative; display: flex; flex-direction: column; height: 100%; animation: cardIn 0.35s ease both; }
+        .product-card:hover { transform: translateY(-4px); border-color: rgba(240,192,64,0.25); box-shadow: 0 16px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(240,192,64,0.08); }
+        .product-card.out-of-stock { opacity: 0.55; }
+        .product-card.low-stock { border-left: 3px solid var(--orange); }
+        .product-card.out-of-stock-card { border-left: 3px solid var(--red); }
+
+        .card-image { width: 100%; aspect-ratio: 1 / 1; background: var(--surface2); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+        .card-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+        .product-card:hover .card-image img { transform: scale(1.04); }
+        .card-image .no-img-icon { color: var(--text-faint); font-size: 36px; }
+
+        .stock-badge { position: absolute; top: 10px; right: 10px; padding: 3px 10px; border-radius: 999px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; backdrop-filter: blur(4px); }
+        .stock-badge.ok  { background: rgba(48,208,144,0.85); color: #0a0a0f; }
+        .stock-badge.low { background: rgba(240,144,48,0.85); color: #0a0a0f; }
+        .stock-badge.out { background: rgba(240,80,96,0.85);  color: #fff; }
+
+        .card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
+        .card-category { font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+        .card-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.3; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 39px; }
+        .card-footer-row { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+        .card-price { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent); }
+        .card-stock-text { font-size: 11px; color: var(--text-dim); font-weight: 500; }
+        .card-stock-text.low { color: var(--orange); }
+        .card-stock-text.out { color: var(--red); }
+
+        /* ─── MODAL ─── */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.2s ease; }
+        .modal-overlay.open { display: flex; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; width: 100%; max-width: 560px; overflow: hidden; animation: slideUp 0.25s cubic-bezier(.22,.68,0,1.2); max-height: 90vh; overflow-y: auto; }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(24px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        .modal-image { width: 100%; height: 260px; background: var(--surface2); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+        .modal-image img { width: 100%; height: 100%; object-fit: cover; }
+        .modal-image .no-img-big { color: var(--text-faint); font-size: 56px; }
+
+        .modal-close-btn { position: absolute; top: 14px; right: 14px; width: 36px; height: 36px; background: rgba(10,10,15,0.7); border: 1px solid var(--border); border-radius: 50%; color: var(--text); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+        .modal-close-btn:hover { background: rgba(10,10,15,0.9); }
+
+        .modal-content { padding: 28px; }
+        .modal-cat { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+        .modal-name { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; color: var(--text); line-height: 1.2; margin-bottom: 24px; }
+
+        .modal-details { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+        .detail-tile { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; }
+        .detail-tile .tile-label { font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-faint); margin-bottom: 6px; }
+        .detail-tile .tile-val { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); transition: color 0.3s ease; }
+        .detail-tile.accent-tile { border-color: rgba(240,192,64,0.25); }
+        .detail-tile.accent-tile .tile-val { color: var(--accent); }
+
+        .modal-barcode { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; display: flex; align-items: center; gap: 10px; color: var(--text-dim); font-size: 13px; }
+        .modal-barcode i { color: var(--text-faint); }
+        .modal-barcode code { font-family: 'Courier New', monospace; color: var(--text); font-size: 13px; }
+
+        .empty-state { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 80px 20px; color: var(--text-faint); }
+        .empty-state i { font-size: 48px; opacity: 0.4; }
+        .empty-state p { font-family: 'Syne', sans-serif; font-size: 16px; color: var(--text-dim); }
+        .empty-state small { font-size: 13px; }
+
+        .loader-wrap { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 80px 20px; color: var(--text-dim); }
+        .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .result-info { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .result-count { font-size: 13px; color: var(--text-dim); }
+        .result-count strong { font-family: 'Syne', sans-serif; color: var(--text); }
+
+        @keyframes cardIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 1400px) { .products-grid { grid-template-columns: repeat(5,1fr); gap: 20px; } }
+        @media (max-width: 1200px) { .products-grid { grid-template-columns: repeat(4,1fr); } }
+        @media (max-width: 992px)  { .products-grid { grid-template-columns: repeat(3,1fr); } }
+        @media (max-width: 768px) {
+            .header-inner { gap: 12px; height: 60px; }
+            header { padding: 0 16px; }
+            .main { padding: 20px 16px 60px; }
+            .modal-details { grid-template-columns: 1fr; }
+            .products-grid { grid-template-columns: repeat(2,1fr); gap: 16px; }
+            .header-stats { display: none; }
+            .live-indicator span { display: none; }
+            .fab-login { bottom: 20px; right: 20px; height: 48px; width: 48px; }
+            .fab-icon { width: 48px; height: 48px; font-size: 16px; }
+        }
+        @media (max-width: 480px) { .products-grid { grid-template-columns: 1fr; } }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
+    </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header>
+    <div class="header-inner">
+        <a href="#" class="logo">
+            <div class="logo-mark"><i class="fas fa-store"></i></div>
+            <div>
+                <div class="logo-text">TechFlow</div>
+                <span class="logo-sub">Catalogue</span>
+            </div>
+        </a>
+
+        <div class="header-divider"></div>
+
+        <div class="search-wrap">
+            <i class="fas fa-search"></i>
+            <input type="text" class="search-input" id="searchInput"
+                   placeholder="Rechercher un produit, code-barre…">
+        </div>
+
+        <div class="header-stats">
+            <div class="stat-pill" id="statTotalPill" onclick="setStockFilter('all')">
+                <i class="fas fa-box"></i>
+                <span id="statTotal">—</span> produits
+            </div>
+            <div class="stat-pill low-stock-pill" id="statLowStockPill" onclick="setStockFilter('low')">
+                <i class="fas fa-exclamation-triangle" style="color:var(--orange);"></i>
+                <span id="statLowStock">—</span> stock faible
+            </div>
+            <div class="stat-pill out-stock-pill" id="statOutStockPill" onclick="setStockFilter('out')">
+                <i class="fas fa-times-circle" style="color:var(--red);"></i>
+                <span id="statOutStock">—</span> rupture
+            </div>
+        </div>
+
+        <!-- ══ LIVE INDICATOR ══ -->
+        <div class="live-indicator" id="liveIndicator">
+            <div class="live-dot"></div>
+            <span id="liveLabel">Connexion…</span>
+        </div>
+
+        <a href="/login.html" class="btn-login-header">
+            <i class="fas fa-sign-in-alt"></i>
+            Se connecter
+        </a>
+    </div>
+</header>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main">
+    <div class="section-label">Catégories</div>
+    <div class="categories-row" id="categoriesRow">
+        <button class="cat-btn active" data-cat="all" onclick="setCategory('all')">
+            <i class="fas fa-th-large" style="font-size:11px;"></i> Tous
+        </button>
+    </div>
+
+    <div class="filter-status-bar" id="filterStatusBar" style="display:none;">
+        <div class="active-filter-badge" id="activeFilterBadge"></div>
+        <button class="clear-filters-btn" onclick="clearAllFilters()">
+            <i class="fas fa-times"></i> Effacer les filtres
+        </button>
+    </div>
+
+    <div class="result-info">
+        <div class="result-count" id="resultCount"></div>
+    </div>
+
+    <div class="products-grid" id="productsGrid">
+        <div class="loader-wrap">
+            <div class="spinner"></div>
+            <span>Chargement du catalogue…</span>
+        </div>
+    </div>
+</main>
+
+<!-- ═══ FAB ═══ -->
+<a href="/login.html" class="fab-login" id="fabLogin" aria-label="Se connecter">
+    <span class="fab-icon"><i class="fas fa-sign-in-alt"></i></span>
+    <span class="fab-label">Se connecter</span>
+</a>
+
+<!-- ═══ TOAST LIVE UPDATE ═══ -->
+<div class="update-toast" id="updateToast">
+    <i class="fas fa-bolt"></i>
+    <span id="updateToastMsg">Catalogue mis à jour</span>
+</div>
+
+<!-- ═══ MODAL ═══ -->
+<div class="modal-overlay" id="detailModal" onclick="closeModal(event)">
+    <div class="modal-box" id="modalBox">
+        <div class="modal-image" id="modalImage">
+            <button class="modal-close-btn" onclick="closeModalDirect()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-content">
+            <div class="modal-cat" id="modalCat"></div>
+            <div class="modal-name" id="modalName"></div>
+            <div class="modal-details" id="modalDetails"></div>
+            <div id="modalBarcode"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════ */
+let allProducts = [];
+let currentCategory = 'all';
+let searchQuery = '';
+let currentStockFilter = 'all';
+let openModalProductId = null;
+
+/* ══════════════════════════════════════════════════════
+   FAB SCROLL
+══════════════════════════════════════════════════════ */
+const fabEl = document.getElementById('fabLogin');
+let fabVisible = false;
+window.addEventListener('scroll', () => {
+    const s = window.scrollY > 120;
+    if (s !== fabVisible) { fabVisible = s; fabEl.classList.toggle('visible', s); }
+}, { passive: true });
+
+/* ══════════════════════════════════════════════════════
+   LIVE INDICATOR HELPERS
+══════════════════════════════════════════════════════ */
+const liveEl    = document.getElementById('liveIndicator');
+const liveLabel = document.getElementById('liveLabel');
+
+function setLiveStatus(status) {
+    liveEl.className = 'live-indicator ' + status;
+    if (status === 'connected')    liveLabel.textContent = 'Temps réel';
+    if (status === 'reconnecting') liveLabel.textContent = 'Reconnexion…';
+    if (status === '')             liveLabel.textContent = 'Connexion…';
+}
+
+/* ══════════════════════════════════════════════════════
+   TOAST NOTIFICATION
+══════════════════════════════════════════════════════ */
+let toastTimer;
+function showUpdateToast(msg) {
+    const toast = document.getElementById('updateToast');
+    document.getElementById('updateToastMsg').textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+/* ══════════════════════════════════════════════════════
+   FLASH CARD
+══════════════════════════════════════════════════════ */
+function flashCard(productId, type) {
+    const card = document.querySelector(`.product-card[data-id="${productId}"]`);
+    if (!card) return;
+    const cls = type === 'up' ? 'card-flash-up' : type === 'down' ? 'card-flash-down' : 'card-flash-update';
+    card.classList.remove('card-flash-up', 'card-flash-down', 'card-flash-update');
+    void card.offsetWidth; // reflow
+    card.classList.add(cls);
+    setTimeout(() => card.classList.remove(cls), 1000);
+}
+
+/* ══════════════════════════════════════════════════════
+   SSE — SERVER-SENT EVENTS
+   Le serveur doit émettre sur /api/public/events
+══════════════════════════════════════════════════════ */
+let sseSource = null;
+let sseRetryCount = 0;
+const SSE_MAX_RETRY = 10;
+let sseRetryTimer = null;
+
+function connectSSE() {
+    if (sseSource) { sseSource.close(); sseSource = null; }
+
+    sseSource = new EventSource('/api/public/events');
+
+    sseSource.addEventListener('open', () => {
+        sseRetryCount = 0;
+        setLiveStatus('connected');
+    });
+
+    /* ── product:update → stock ou sary na anarana niova ── */
+    sseSource.addEventListener('product:update', e => {
+        const updated = JSON.parse(e.data); // { id, name, sale_price, quantity, min_stock, image, category, ... }
+        const idx = allProducts.findIndex(p => p.id === updated.id);
+        if (idx === -1) return;
+
+        const old = allProducts[idx];
+        const qtyDiff = updated.quantity - old.quantity;
+
+        allProducts[idx] = { ...old, ...updated };
+
+        // Flash selon variation de stock
+        if (qtyDiff > 0)       flashCard(updated.id, 'up');
+        else if (qtyDiff < 0)  flashCard(updated.id, 'down');
+        else                    flashCard(updated.id, 'update');
+
+        // Mise à jour ciblée de la carte (sans re-render complet)
+        patchCard(allProducts[idx], old);
+
+        // Si la modal de ce produit est ouverte → patch modal aussi
+        if (openModalProductId === updated.id) {
+            patchModal(allProducts[idx]);
+        }
+
+        // Stats
+        updateStockStats();
+        renderStats();
+
+        // Toast
+        const msgs = [];
+        if (qtyDiff !== 0) msgs.push(`Stock ${updated.name} : ${updated.quantity} unité${updated.quantity > 1 ? 's' : ''}`);
+        else if (old.name !== updated.name) msgs.push(`Produit renommé : ${updated.name}`);
+        else msgs.push(`${updated.name} mis à jour`);
+        showUpdateToast(msgs[0]);
+    });
+
+    /* ── product:new → nouveau produit ajouté ── */
+    sseSource.addEventListener('product:new', e => {
+        const newProd = JSON.parse(e.data);
+        if (allProducts.some(p => p.id === newProd.id)) return;
+        allProducts.unshift(newProd);
+        buildCategories();
+        updateStockStats();
+        renderStats();
+        renderProducts();
+        showUpdateToast(`Nouveau produit : ${newProd.name}`);
+    });
+
+    /* ── product:delete → produit supprimé ── */
+    sseSource.addEventListener('product:delete', e => {
+        const { id } = JSON.parse(e.data);
+        const prod = allProducts.find(p => p.id === id);
+        allProducts = allProducts.filter(p => p.id !== id);
+        buildCategories();
+        updateStockStats();
+        renderStats();
+        renderProducts();
+        if (openModalProductId === id) closeModalDirect();
+        if (prod) showUpdateToast(`Produit retiré : ${prod.name}`);
+    });
+
+    /* ── ping ── (keepalive, ignoré) */
+    sseSource.addEventListener('ping', () => {});
+
+    sseSource.addEventListener('error', () => {
+        sseSource.close();
+        sseSource = null;
+        setLiveStatus('reconnecting');
+        if (sseRetryCount < SSE_MAX_RETRY) {
+            const delay = Math.min(1000 * 2 ** sseRetryCount, 30000);
+            sseRetryCount++;
+            sseRetryTimer = setTimeout(connectSSE, delay);
+        } else {
+            setLiveStatus('');
+            liveLabel.textContent = 'Hors ligne';
+        }
+    });
+}
+
+/* ══════════════════════════════════════════════════════
+   PATCH CARD — mise à jour DOM ciblée sans re-render
+══════════════════════════════════════════════════════ */
+function patchCard(p, old) {
+    const card = document.querySelector(`.product-card[data-id="${p.id}"]`);
+    if (!card) {
+        // Carte absente du DOM actuel → re-render
+        renderProducts();
+        return;
+    }
+
+    const min = p.min_stock || 5;
+
+    // Stock badge
+    const badge = card.querySelector('.stock-badge');
+    if (badge) {
+        badge.className = 'stock-badge';
+        if (p.product_type === 'service') { badge.style.background='rgba(124,58,237,0.85)'; badge.style.color='#fff'; badge.textContent='Service'; }
+        else if (p.quantity <= 0) { badge.classList.add('out'); badge.textContent = 'Rupture'; }
+        else if (p.quantity <= min) { badge.classList.add('low'); badge.textContent = 'Stock faible'; }
+        else                      { badge.classList.add('ok');  badge.textContent = 'Dispo'; }
+    }
+
+    // Stock text
+    const stockText = card.querySelector('.card-stock-text');
+    if (stockText) {
+        stockText.className = 'card-stock-text';
+        if (p.quantity <= 0)        { stockText.classList.add('out'); stockText.textContent = 'Rupture'; }
+        else if (p.quantity <= min)  { stockText.classList.add('low'); stockText.textContent = `Faible : ${p.quantity}`; }
+        else                        { stockText.textContent = `${p.quantity} en stock`; }
+    }
+
+    // Nom
+    const nameEl = card.querySelector('.card-name');
+    if (nameEl && nameEl.textContent !== p.name) nameEl.textContent = p.name;
+
+    // Prix
+    const priceEl = card.querySelector('.card-price');
+    if (priceEl) priceEl.textContent = formatCurrency(p.sale_price);
+
+    // Catégorie
+    const catEl = card.querySelector('.card-category');
+    if (catEl && p.category) catEl.textContent = p.category;
+
+    // Image
+    const imgEl = card.querySelector('.card-image img');
+    const iconEl = card.querySelector('.card-image .no-img-icon');
+    if (p.image) {
+        if (imgEl) { if (imgEl.src !== p.image) imgEl.src = p.image; }
+        else if (iconEl) {
+            iconEl.remove();
+            const img = document.createElement('img');
+            img.src = p.image; img.alt = escHtml(p.name); img.loading = 'lazy';
+            card.querySelector('.card-image').prepend(img);
+        }
+    }
+
+    // Classes de la carte
+    const isSvcT = p.product_type === 'service';
+    card.classList.toggle('out-of-stock',       !isSvcT && p.quantity <= 0);
+    card.classList.toggle('out-of-stock-card',  !isSvcT && p.quantity <= 0);
+    card.classList.toggle('low-stock',          p.quantity > 0 && p.quantity <= min);
+
+    // Si le produit ne passe plus le filtre actif → re-render complet
+    if (!productPassesFilter(p)) renderProducts();
+}
+
+function productPassesFilter(p) {
+    const min = p.min_stock || 5;
+    const matchCat = currentCategory === 'all' || p.category === currentCategory;
+    let matchStock = true;
+    if (currentStockFilter === 'low') matchStock = p.quantity > 0 && p.quantity <= min;
+    else if (currentStockFilter === 'out') matchStock = p.quantity <= 0;
+    const matchSearch = !searchQuery ||
+        p.name.toLowerCase().includes(searchQuery) ||
+        (p.barcode && p.barcode.toLowerCase().includes(searchQuery)) ||
+        (p.category && p.category.toLowerCase().includes(searchQuery));
+    return matchCat && matchStock && matchSearch;
+}
+
+/* ══════════════════════════════════════════════════════
+   PATCH MODAL — met à jour la modal si elle est ouverte
+══════════════════════════════════════════════════════ */
+function patchModal(p) {
+    const min = p.min_stock || 5;
+    let stockColor = 'var(--green)', stockLabel = `${p.quantity} unités`;
+    if (p.quantity <= 0)       { stockColor = 'var(--red)';    stockLabel = 'Rupture de stock'; }
+    else if (p.quantity <= min){ stockColor = 'var(--orange)'; stockLabel = `${p.quantity} unités (faible)`; }
+
+    // Update stock tile value
+    const tiles = document.querySelectorAll('#modalDetails .detail-tile');
+    tiles.forEach(tile => {
+        const label = tile.querySelector('.tile-label');
+        if (label && label.textContent === 'Stock disponible') {
+            const val = tile.querySelector('.tile-val');
+            if (val) { val.style.color = stockColor; val.textContent = stockLabel; }
+        }
+        if (label && label.textContent === 'Prix de vente') {
+            const val = tile.querySelector('.tile-val');
+            if (val) val.textContent = formatCurrency(p.sale_price);
+        }
+    });
+
+    // Update name & category
+    const nameEl = document.getElementById('modalName');
+    if (nameEl) nameEl.textContent = p.name;
+    const catEl = document.getElementById('modalCat');
+    if (catEl) catEl.textContent = p.category || '';
+
+    // Update image
+    const modalImg = document.querySelector('#modalImage img');
+    if (p.image && modalImg && modalImg.src !== p.image) modalImg.src = p.image;
+}
+
+/* ══════════════════════════════════════════════════════
+   FETCH INITIAL
+══════════════════════════════════════════════════════ */
+async function loadProducts() {
+    try {
+        const res = await fetch('/api/public/products');
+        if (!res.ok) throw new Error('Erreur réseau');
+        allProducts = await res.json();
+        buildCategories();
+        updateStockStats();
+        renderStats();
+        renderProducts();
+        connectSSE();
+    } catch (err) {
+        document.getElementById('productsGrid').innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Impossible de charger le catalogue</p>
+                <small>Vérifiez votre connexion</small>
+            </div>`;
+        setLiveStatus('reconnecting');
+        setTimeout(loadProducts, 5000);
+    }
+}
+
+/* ══════════════════════════════════════════════════════
+   STOCK STATS
+══════════════════════════════════════════════════════ */
+function getStockStats() {
+    const lowStock = allProducts.filter(p => { const m = p.min_stock || 5; return p.quantity > 0 && p.quantity <= m; }).length;
+    const outStock = allProducts.filter(p => p.quantity <= 0).length;
+    return { lowStock, outStock };
+}
+
+function updateStockStats() {
+    const { lowStock, outStock } = getStockStats();
+    document.getElementById('statLowStock').textContent = lowStock;
+    document.getElementById('statOutStock').textContent = outStock;
+}
+
+/* ══════════════════════════════════════════════════════
+   CATEGORIES
+══════════════════════════════════════════════════════ */
+function buildCategories() {
+    const cats = [...new Set(allProducts.map(p => p.category).filter(Boolean))].sort();
+    const row = document.getElementById('categoriesRow');
+    row.innerHTML = `
+        <button class="cat-btn ${currentCategory==='all'?'active':''}" data-cat="all" onclick="setCategory('all')">
+            <i class="fas fa-th-large" style="font-size:11px;"></i>
+            Tous <span class="cat-count">${allProducts.length}</span>
+        </button>
+        ${cats.map(cat => {
+            const count = allProducts.filter(p => p.category === cat).length;
+            return `<button class="cat-btn ${currentCategory===cat?'active':''}" data-cat="${cat.replace(/'/g,"\\'")}" onclick="setCategory('${cat.replace(/'/g,"\\'")}')">
+                ${cat} <span class="cat-count">${count}</span>
+            </button>`;
+        }).join('')}
+    `;
+}
+
+function setCategory(cat) {
+    currentCategory = cat;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+    renderProducts();
+}
+
+/* ══════════════════════════════════════════════════════
+   STOCK FILTER
+══════════════════════════════════════════════════════ */
+function setStockFilter(filter) {
+    currentStockFilter = filter;
+    document.getElementById('statTotalPill').classList.toggle('active-filter', filter === 'all');
+    document.getElementById('statLowStockPill').classList.toggle('active-filter', filter === 'low');
+    document.getElementById('statOutStockPill').classList.toggle('active-filter', filter === 'out');
+    renderProducts();
+}
+
+function clearAllFilters() {
+    currentStockFilter = 'all'; currentCategory = 'all'; searchQuery = '';
+    document.getElementById('searchInput').value = '';
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === 'all'));
+    ['statTotalPill','statLowStockPill','statOutStockPill'].forEach((id,i) =>
+        document.getElementById(id).classList.toggle('active-filter', i === 0));
+    renderProducts();
+}
+
+/* ══════════════════════════════════════════════════════
+   SEARCH
+══════════════════════════════════════════════════════ */
+let searchTimeout;
+document.getElementById('searchInput').addEventListener('input', e => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => { searchQuery = e.target.value.trim().toLowerCase(); renderProducts(); }, 250);
+});
+
+/* ══════════════════════════════════════════════════════
+   FILTER
+══════════════════════════════════════════════════════ */
+function getFiltered() {
+    return allProducts.filter(p => {
+        const min = p.min_stock || 5;
+        const matchCat = currentCategory === 'all' || p.category === currentCategory;
+        let matchStock = true;
+        if (currentStockFilter === 'low') matchStock = p.quantity > 0 && p.quantity <= min;
+        else if (currentStockFilter === 'out') matchStock = p.quantity <= 0;
+        const matchSearch = !searchQuery ||
+            p.name.toLowerCase().includes(searchQuery) ||
+            (p.barcode && p.barcode.toLowerCase().includes(searchQuery)) ||
+            (p.category && p.category.toLowerCase().includes(searchQuery));
+        return matchCat && matchStock && matchSearch;
+    });
+}
+
+/* ══════════════════════════════════════════════════════
+   STATS
+══════════════════════════════════════════════════════ */
+function renderStats() { document.getElementById('statTotal').textContent = allProducts.length; }
+
+/* ══════════════════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════════════════ */
+function renderProducts() {
+    const grid = document.getElementById('productsGrid');
+    const filtered = getFiltered();
+    const hasFilters = currentStockFilter !== 'all' || currentCategory !== 'all' || searchQuery !== '';
+
+    const fsb = document.getElementById('filterStatusBar');
+    const afb = document.getElementById('activeFilterBadge');
+    if (hasFilters) {
+        fsb.style.display = 'flex';
+        let texts = [];
+        if (currentStockFilter === 'low') texts.push('<i class="fas fa-exclamation-triangle"></i> Stock faible');
+        if (currentStockFilter === 'out') texts.push('<i class="fas fa-times-circle"></i> Rupture de stock');
+        if (currentCategory !== 'all')    texts.push(`<i class="fas fa-tag"></i> ${currentCategory}`);
+        if (searchQuery)                  texts.push(`<i class="fas fa-search"></i> "${searchQuery}"`);
+        afb.innerHTML = texts.map(t => `<span class="filter-chip">${t}</span>`).join('');
+    } else { fsb.style.display = 'none'; }
+
+    const rc = document.getElementById('resultCount');
+    rc.innerHTML = (hasFilters || filtered.length !== allProducts.length)
+        ? `<strong>${filtered.length}</strong> résultat${filtered.length !== 1 ? 's' : ''}` : '';
+
+    if (filtered.length === 0) {
+        grid.innerHTML = `<div class="empty-state"><i class="fas fa-search"></i><p>Aucun produit trouvé</p><small>Essayez un autre mot-clé ou catégorie</small></div>`;
+        return;
+    }
+
+    grid.innerHTML = filtered.map((p, i) => {
+        const min = p.min_stock || 5;
+        const isSvc = p.product_type === 'service';
+        let stockBadge, stockClass, stockLabel, cardExtraClass = '';
+        if (isSvc) {
+            stockBadge = `<span class="stock-badge" style="background:rgba(124,58,237,0.85);color:#fff;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;">Service</span>`;
+            stockClass = ''; stockLabel = 'Service';
+        } else if (p.quantity <= 0) {
+            stockBadge = `<span class="stock-badge out">Rupture</span>`;
+            stockClass = 'out'; stockLabel = 'Rupture'; cardExtraClass = 'out-of-stock-card';
+        } else if (p.quantity <= min) {
+            stockBadge = `<span class="stock-badge low">Stock faible</span>`;
+            stockClass = 'low'; stockLabel = `Faible : ${p.quantity}`; cardExtraClass = 'low-stock';
+        } else {
+            stockBadge = `<span class="stock-badge ok">Dispo</span>`;
+            stockClass = 'ok'; stockLabel = `${p.quantity} en stock`;
+        }
+        const img = p.image
+            ? `<img src="${p.image}" alt="${escHtml(p.name)}" loading="lazy">`
+            : `<i class="fas fa-box no-img-icon"></i>`;
+
+        return `
+            <div class="product-card ${(!isSvc && p.quantity <= 0) ? 'out-of-stock' : ''} ${cardExtraClass}"
+                 data-id="${p.id}"
+                 style="animation-delay:${Math.min(i*0.02,0.4)}s"
+                 onclick="openModal(${p.id})">
+                <div class="card-image">
+                    ${img}
+                    ${stockBadge}
+                </div>
+                <div class="card-body">
+                    ${p.category ? `<div class="card-category">${escHtml(p.category)}</div>` : ''}
+                    <div class="card-name">${escHtml(p.name)}</div>
+                    <div class="card-footer-row">
+                        <div class="card-price">${formatCurrency(p.sale_price)}</div>
+                        <div class="card-stock-text ${stockClass}">${stockLabel}</div>
+                    </div>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+/* ══════════════════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════════════════ */
+function openModal(id) {
+    const p = allProducts.find(x => x.id === id);
+    if (!p) return;
+    openModalProductId = id;
+    const min = p.min_stock || 5;
+    let stockColor = 'var(--green)', stockLabel = `${p.quantity} unités`;
+    if (p.quantity <= 0)       { stockColor = 'var(--red)';    stockLabel = 'Rupture de stock'; }
+    else if (p.quantity <= min){ stockColor = 'var(--orange)'; stockLabel = `${p.quantity} unités (faible)`; }
+
+    document.getElementById('modalImage').innerHTML = `
+        <button class="modal-close-btn" onclick="closeModalDirect()"><i class="fas fa-times"></i></button>
+        ${p.image ? `<img src="${p.image}" alt="${escHtml(p.name)}">` : `<i class="fas fa-box no-img-big"></i>`}
+    `;
+    document.getElementById('modalCat').textContent  = p.category || '';
+    document.getElementById('modalName').textContent = p.name;
+    document.getElementById('modalDetails').innerHTML = `
+        <div class="detail-tile accent-tile">
+            <div class="tile-label">Prix de vente</div>
+            <div class="tile-val">${formatCurrency(p.sale_price)}</div>
+        </div>
+        <div class="detail-tile">
+            <div class="tile-label">Stock disponible</div>
+            <div class="tile-val" style="color:${stockColor}">${stockLabel}</div>
+        </div>
+        ${p.min_stock ? `<div class="detail-tile"><div class="tile-label">Stock minimum</div><div class="tile-val">${p.min_stock} unités</div></div>` : ''}
+        ${p.category  ? `<div class="detail-tile"><div class="tile-label">Catégorie</div><div class="tile-val" style="font-size:15px;">${escHtml(p.category)}</div></div>` : ''}
+    `;
+    document.getElementById('modalBarcode').innerHTML = p.barcode ? `
+        <div class="modal-barcode" style="margin-top:12px;">
+            <i class="fas fa-barcode"></i><span>Code-barre :</span><code>${escHtml(p.barcode)}</code>
+        </div>` : '';
+
+    document.getElementById('detailModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e) { if (e.target === document.getElementById('detailModal')) closeModalDirect(); }
+function closeModalDirect() {
+    document.getElementById('detailModal').classList.remove('open');
+    document.body.style.overflow = '';
+    openModalProductId = null;
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalDirect(); });
+
+/* ══════════════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════════════ */
+function formatCurrency(amount) {
+    if (!amount) amount = 0;
+    return new Intl.NumberFormat('fr-MG').format(Math.round(amount)) + ' Ar';
+}
+function escHtml(str) {
+    if (!str) return '';
+    const d = document.createElement('div'); d.textContent = str; return d.innerHTML;
+}
+
+/* ══════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════ */
+loadProducts();
+</script>
+</body>
+</html>

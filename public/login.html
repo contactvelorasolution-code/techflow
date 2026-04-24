@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <!-- Favicon TECHFLOW POS -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <title>Connexion - TechFlow </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        /* Additional styles specific to login page */
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #050505;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-page::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(37, 99, 235, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(37, 99, 235, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(37, 99, 235, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+            animation: bgPulse 8s ease-in-out infinite;
+        }
+
+        @keyframes bgPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .login-page::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(37, 99, 235, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(37, 99, 235, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+
+        .login-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 80px;
+            max-width: 1100px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-branding {
+            flex: 1;
+            color: #ffffff;
+            display: none;
+        }
+
+        @media (min-width: 1000px) {
+            .login-branding {
+                display: block;
+            }
+        }
+
+        .login-branding h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 52px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            letter-spacing: 3px;
+            background: linear-gradient(135deg, #ffffff 0%, #2563eb 50%, #ffffff 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientMove 5s ease infinite;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% center; }
+            50% { background-position: 100% center; }
+            100% { background-position: 0% center; }
+        }
+
+        .login-branding > p {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 18px;
+            color: #9ca3af;
+            line-height: 1.8;
+            max-width: 400px;
+        }
+
+        .login-branding .features {
+            margin-top: 45px;
+        }
+
+        .login-branding .feature {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 20px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 16px;
+            font-weight: 500;
+            color: #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .login-branding .feature:hover {
+            transform: translateX(10px);
+            color: #ffffff;
+        }
+
+        .login-branding .feature i {
+            width: 35px;
+            height: 35px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .login-container {
+            background: #111111;
+            padding: 50px 45px;
+            border-radius: 8px;
+            border: 1px solid #333333;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.5),
+                0 0 100px rgba(37, 99, 235, 0.1);
+            position: relative;
+        }
+
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #2563eb, transparent);
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 45px;
+        }
+
+        .login-logo-icon {
+            width: 85px;
+            height: 85px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            box-shadow: 0 0 40px rgba(37, 99, 235, 0.4);
+            animation: iconFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .login-logo-icon i {
+            font-size: 38px;
+            color: #ffffff;
+        }
+
+        .login-logo h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 26px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+        }
+
+        .login-logo p {
+            font-family: 'Rajdhani', sans-serif;
+            color: #6b7280;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .login-form .form-group {
+            margin-bottom: 28px;
+        }
+
+        .login-form label {
+            display: block;
+            margin-bottom: 12px;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            font-size: 12px;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .login-form .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .login-form .input-wrapper .input-icon {
+            position: absolute;
+            left: 18px;
+            color: #6b7280;
+            font-size: 16px;
+            pointer-events: none;
+            z-index: 1;
+            transition: color 0.3s ease;
+        }
+
+        .login-form input[type="text"],
+        .login-form input[type="password"] {
+            width: 100%;
+            padding: 16px 55px 16px 55px;
+            background: #0a0a0a;
+            border: 1px solid #333333;
+            border-radius: 4px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 16px;
+            font-weight: 500;
+            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .login-form input:focus {
+            outline: none;
+            background: #000000;
+            border-color: #ffffff;
+        }
+
+        .login-form input:focus + .input-icon,
+        .login-form .input-wrapper:focus-within .input-icon {
+            color: #2563eb;
+        }
+
+        .login-form input::placeholder {
+            color: #4b5563;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #1a1a1a;
+            border: 1px solid #333333;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 10px 14px;
+            border-radius: 4px;
+            margin-right: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .password-toggle:hover {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #ffffff;
+        }
+
+        .login-form button[type="submit"] {
+            width: 100%;
+            padding: 18px;
+            background: #ffffff;
+            color: #050505;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-form button[type="submit"]::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .login-form button[type="submit"]:hover {
+            background: #2563eb;
+            color: #ffffff;
+            box-shadow: 0 0 30px rgba(37, 99, 235, 0.5);
+        }
+
+        .login-form button[type="submit"]:hover::before {
+            left: 100%;
+        }
+
+        .login-form button[type="submit"]:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .login-form button[type="submit"]:disabled:hover {
+            background: #ffffff;
+            color: #050505;
+            box-shadow: none;
+        }
+
+        .login-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            padding: 16px 18px;
+            border-radius: 4px;
+            margin-bottom: 28px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .login-error i { font-size: 20px; }
+
+        .login-form button[type="submit"].success {
+            background: #22c55e;
+            color: #ffffff;
+        }
+
+        /* ─── CATALOG DIVIDER ─── */
+        .catalog-divider {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 28px 0 24px;
+        }
+
+        .catalog-divider::before,
+        .catalog-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #222222;
+        }
+
+        .catalog-divider span {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px;
+            font-weight: 500;
+            color: #4b5563;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        /* ─── CATALOG BUTTON ─── */
+        .btn-catalog {
+            width: 100%;
+            padding: 15px 18px;
+            background: transparent;
+            border: 1px solid #2a2a2a;
+            border-radius: 4px;
+            color: #9ca3af;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-catalog::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(37,99,235,0.02));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .btn-catalog:hover {
+            border-color: #2563eb;
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.15), inset 0 0 20px rgba(37,99,235,0.05);
+        }
+
+        .btn-catalog:hover::before { opacity: 1; }
+
+        .btn-catalog i {
+            font-size: 16px;
+            color: #2563eb;
+            transition: transform 0.3s;
+        }
+
+        .btn-catalog:hover i {
+            transform: translateX(3px);
+        }
+
+        .btn-catalog .catalog-badge {
+            margin-left: auto;
+            background: rgba(37,99,235,0.15);
+            border: 1px solid rgba(37,99,235,0.25);
+            color: #60a5fa;
+            font-size: 9px;
+            padding: 2px 8px;
+            border-radius: 99px;
+            letter-spacing: 1px;
+        }
+
+        /* ─── FOOTER ─── */
+        .login-footer {
+            margin-top: 28px;
+            text-align: center;
+            color: #4b5563;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .login-footer p { margin: 0; }
+
+        /* Spinner */
+        .spinner-btn {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(5, 5, 5, 0.3);
+            border-top-color: #050505;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Version badge */
+        .version-badge {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: #111111;
+            border: 1px solid #333333;
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            color: #6b7280;
+            letter-spacing: 1px;
+            z-index: 1;
+        }
+
+        @media (max-width: 480px) {
+            .login-container { padding: 40px 25px; }
+            .login-logo-icon { width: 70px; height: 70px; }
+            .login-logo-icon i { font-size: 30px; }
+            .login-logo h1 { font-size: 22px; }
+            .login-form input[type="text"],
+            .login-form input[type="password"] { padding: 14px 50px 14px 50px; }
+            .login-form button[type="submit"] { padding: 16px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body class="login-page">
+    <div class="version-badge">
+        <i class="fas fa-code-branch"></i> v1.2.7
+    </div>
+
+    <div class="login-wrapper">
+        <!-- Branding -->
+        <div class="login-branding">
+            <h1>TechFlow</h1>
+            <p>Système de point de vente professionnel nouvelle génération pour votre magasin d'accessoires informatiques.</p>
+            
+            <div class="features">
+                <div class="feature">
+                    <i class="fas fa-bolt"></i>
+                    <span>Ventes ultra-rapides et intuitives</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-cube"></i>
+                    <span>Gestion des stocks en temps réel</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-file-pdf"></i>
+                    <span>Factures PDF professionnelles</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analyse des profits et trésorerie</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-users-cog"></i>
+                    <span>Multi-utilisateurs avec rôles</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Sécurisé et fiable</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Login Form -->
+        <div class="login-container">
+            <div class="login-logo">
+                <div class="login-logo-icon">
+                    <i class="fas fa-satellite-dish"></i>
+                </div>
+                <h1>TechFlow</h1>
+                <p>Connexion sécurisée</p>
+            </div>
+            
+            <div class="login-error" id="loginError">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="errorMessage">Identifiants incorrects</span>
+            </div>
+            
+            <form class="login-form" id="loginForm" autocomplete="off">
+                <div class="form-group">
+                    <label for="username">Identifiant</label>
+                    <div class="input-wrapper">
+                        <input type="text" 
+                               id="username" 
+                               name="username" 
+                               required 
+                               placeholder="Entrez votre identifiant"
+                               autocomplete="username"
+                               autofocus>
+                        <i class="fas fa-user input-icon"></i>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Mot de passe</label>
+                    <div class="input-wrapper">
+                        <input type="password" 
+                               id="password" 
+                               name="password" 
+                               required 
+                               placeholder="Entrez votre mot de passe"
+                               autocomplete="current-password">
+                        <i class="fas fa-lock input-icon"></i>
+                        <button type="button" class="password-toggle" onclick="togglePassword()" title="Afficher/Masquer">
+                            <i class="fas fa-eye" id="toggleIcon"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <button type="submit" id="submitBtn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Se connecter</span>
+                </button>
+            </form>
+
+            <!-- ─── CATALOGUE LINK ─── -->
+            <div class="catalog-divider">
+                <span>ou</span>
+            </div>
+
+            <a href="/catalog.html" class="btn-catalog">
+                <i class="fas fa-store"></i>
+                Voir le catalogue
+                <span class="catalog-badge">SANS COMPTE</span>
+            </a>
+            <!-- ─────────────────────── -->
+
+            <div class="login-footer">
+                <p>© 2026 TechFlow by Mickael Randria — Tous droits réservés</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+        
+        async function checkSession() {
+            try {
+                const response = await fetch('/api/session');
+                if (response.ok) {
+                    const data = await response.json();
+                    window.location.href = data.user.role === 'admin' ? '/index.html' : '/pos.html';
+                }
+            } catch (e) {}
+        }
+        checkSession();
+        
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('loginError');
+            const errorMessage = document.getElementById('errorMessage');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (!username || !password) {
+                errorMessage.textContent = 'Veuillez remplir tous les champs';
+                errorDiv.style.display = 'flex';
+                return;
+            }
+            
+            errorDiv.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="spinner-btn"></div> <span>Connexion...</span>';
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    submitBtn.classList.add('success');
+                    submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>Connecté!</span>';
+                    setTimeout(() => {
+                        window.location.href = data.user.role === 'admin' ? '/index.html' : '/pos.html';
+                    }, 800);
+                } else {
+                    errorMessage.textContent = data.error || 'Identifiants incorrects';
+                    errorDiv.style.display = 'flex';
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('success');
+                    submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> <span>Se connecter</span>';
+                    document.getElementById('password').value = '';
+                    document.getElementById('password').focus();
+                }
+            } catch (error) {
+                errorMessage.textContent = 'Erreur de connexion au serveur. Vérifiez que le serveur est démarré.';
+                errorDiv.style.display = 'flex';
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('success');
+                submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> <span>Se connecter</span>';
+            }
+        });
+        
+        document.getElementById('username').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('password').focus();
+        });
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+        });
+        document.getElementById('username').addEventListener('input', () => {
+            document.getElementById('loginError').style.display = 'none';
+        });
+        document.getElementById('password').addEventListener('input', () => {
+            document.getElementById('loginError').style.display = 'none';
+        });
+    </script>
+</body>
+</html>

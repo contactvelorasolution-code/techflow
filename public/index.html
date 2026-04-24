@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <!-- Favicon TECHFLOW POS -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <title>Dashboard - TechFlow </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="sidebar-logo-icon">
+                        <i class="fas fa-cash-register"></i>
+                    </div>
+                    <div class="sidebar-logo-text">
+                        <h2> TechFlow </h2>
+                        <span>Point de Vente</span>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Principal</div>
+                    <a href="/index.html" class="nav-item active admin-only">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/pos.html" class="nav-item">
+                        <i class="fas fa-cash-register"></i>
+                        <span>Point de Vente</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Gestion</div>
+                    <a href="/inventory.html" class="nav-item">
+                        <i class="fas fa-boxes"></i>
+                        <span>Inventaire</span>
+                    </a>
+                    <a href="/sales.html" class="nav-item">
+                        <i class="fas fa-receipt"></i>
+                        <span>Ventes</span>
+                    </a>
+                    <a href="/clients.html" class="nav-item">
+                        <i class="fas fa-users"></i>
+                        <span>Clients</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section admin-only">
+                    <div class="nav-section-title">Administration</div>
+                    <a href="/profits.html" class="nav-item">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Profits</span>
+                    </a>
+                    <a href="/treasury.html" class="nav-item">
+                        <i class="fas fa-wallet"></i>
+                        <span>Trésorerie</span>
+                    </a>
+                    <a href="/users.html" class="nav-item">
+                        <i class="fas fa-user-cog"></i>
+                        <span>Utilisateurs</span>
+                    </a>
+                    <a href="/config.html" class="nav-item">
+                        <i class="fas fa-cog"></i>
+                        <span>Configuration</span>
+                    </a>
+                </div>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">AD</div>
+                    <div class="user-details">
+                        <h4>Admin</h4>
+                        <span>Administrateur</span>
+                    </div>
+                </div>
+                <button class="btn-logout" onclick="Auth.logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Déconnexion
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <div class="page-title">
+                    <h1>Dashboard</h1>
+                    <p>Vue d'ensemble de votre activité</p>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-secondary" onclick="Dashboard.load()">
+                        <i class="fas fa-sync-alt"></i> Actualiser
+                    </button>
+                    <button class="btn btn-primary" onclick="window.location.href='/pos.html'">
+                        <i class="fas fa-plus"></i> Nouvelle Vente
+                    </button>
+                </div>
+            </header>
+            
+            <div class="page-body">
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card" onclick="window.location.href='/sales.html'">
+                        <div class="stat-info">
+                            <h4>Ventes du jour</h4>
+                            <div class="stat-value" id="todaySales">0</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i> Aujourd'hui
+                            </div>
+                        </div>
+                        <div class="stat-icon blue">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card" onclick="window.location.href='/sales.html'">
+                        <div class="stat-info">
+                            <h4>Chiffre d'affaires</h4>
+                            <div class="stat-value" id="todayRevenue">0 Ar</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i> Aujourd'hui
+                            </div>
+                        </div>
+                        <div class="stat-icon green">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card" onclick="window.location.href='/treasury.html'">
+                        <div class="stat-info">
+                            <h4>Profit du mois</h4>
+                            <div class="stat-value" id="monthProfit">0 Ar</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i> Ce mois
+                            </div>
+                        </div>
+                        <div class="stat-icon purple">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card" onclick="window.location.href='/inventory.html'">
+                        <div class="stat-info">
+                            <h4>Stock critique</h4>
+                            <div class="stat-value" id="criticalStock">0</div>
+                            <div class="stat-change negative">
+                                <i class="fas fa-exclamation-triangle"></i> Produits
+                            </div>
+                        </div>
+                        <div class="stat-icon red">
+                            <i class="fas fa-box-open"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Charts & Tables -->
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Évolution des ventes</h3>
+                            <select class="form-control" style="width:auto;" onchange="Dashboard.loadChart(this.value)">
+                                <option value="week">7 derniers jours</option>
+                                <option value="month">30 derniers jours</option>
+                            </select>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="salesChart" width="400" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Top Produits</h3>
+                            <span class="text-muted">Ce mois</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Produit</th>
+                                            <th>Vendus</th>
+                                            <th>Revenus</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="topProductsList">
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted">Chargement...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Export Buttons -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h3>Exports</h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                            <button class="btn btn-secondary" onclick="Sales.export('today')">
+                                <i class="fas fa-download"></i> Ventes du jour
+                            </button>
+                            <button class="btn btn-secondary" onclick="Sales.export('week')">
+                                <i class="fas fa-download"></i> Ventes de la semaine
+                            </button>
+                            <button class="btn btn-secondary" onclick="Sales.export('month')">
+                                <i class="fas fa-download"></i> Ventes du mois
+                            </button>
+                            <button class="btn btn-secondary" onclick="StockMovements.export('month')">
+                                <i class="fas fa-download"></i> Mouvements stock
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>

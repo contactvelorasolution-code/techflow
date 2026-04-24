@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <title>Point de Vente - TechFlow</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .preview-container { display: flex; flex-direction: column; gap: 25px; }
+        .preview-image { text-align: center; background: #f8fafc; padding: 25px; border-radius: 12px; max-height: 320px; overflow: hidden; }
+        .preview-image img { max-height: 220px; object-fit: contain; }
+        .no-image { color: #cbd5e1; padding: 50px 0; }
+        .preview-info h4 { margin-bottom: 20px; color: #1e293b; text-align: center; font-size: 22px; font-weight: 600; }
+        .preview-details { background: #1e293b; padding: 25px; border-radius: 12px; color: white; margin-bottom: 30px; }
+        .detail-row { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #334155; }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-row .label { font-weight: 500; color: #cbd5e1; font-size: 15px; }
+        .detail-row .value { color: white; font-weight: 500; font-size: 15px; }
+        .preview-actions { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
+        .preview-actions button { padding: 12px 20px; font-size: 15px; font-weight: 500; border-radius: 8px; min-width: 120px; }
+        .pos-product-name { cursor: pointer; transition: color 0.2s; text-align: center; padding: 5px 0; font-weight: 500; margin-bottom: 5px; height: 40px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .pos-product-name:hover { color: #3b82f6; }
+        .pos-product-price { cursor: pointer; transition: all 0.2s; text-align: center; font-weight: 600; color: #10b981; margin-bottom: 5px; font-size: 16px; }
+        .pos-product-price:hover { color: #059669; transform: scale(1.05); }
+        .pos-product-stock { text-align: center; font-size: 12px; margin-bottom: 8px; height: 20px; }
+        .pos-product-actions { display: flex; flex-direction: column; gap: 5px; margin-top: 5px; }
+        .pos-product-actions button { width: 100%; display: block; text-align: center; }
+        .text-danger { color: #f87171 !important; }
+        .text-warning { color: #fbbf24 !important; }
+        .text-success { color: #34d399 !important; }
+        .text-muted { color: #94a3b8 !important; }
+        .mt-2 { margin-top: 0.5rem; }
+        .btn-outline-primary { background: transparent; border: 1px solid #3b82f6; color: #3b82f6; transition: all 0.2s; }
+        .btn-outline-primary:hover { background: #3b82f6; color: white; }
+        .out-of-stock { opacity: 0.7; position: relative; }
+        .out-of-stock::after { content: "RUPTURE"; position: absolute; top: 10px; right: 10px; background: #ef4444; color: white; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: bold; }
+        .pos-product-stock.out { color: #ef4444; font-weight: bold; }
+        .pos-product-stock.low { color: #f59e0b; font-weight: bold; }
+
+        /* Styles zone remarque et articles manuels */
+        .pos-cart-section {
+            padding: 12px 15px;
+            border-top: 1px solid #1e293b;
+        }
+        .pos-cart-section h4 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #94a3b8;
+            margin: 0 0 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .pos-cart-section h4 i {
+            font-size: 12px;
+        }
+        #saleRemarque {
+            width: 100%;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e2e8f0;
+            padding: 8px 10px;
+            font-size: 13px;
+            resize: vertical;
+            min-height: 60px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        #saleRemarque:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+        #saleRemarque::placeholder {
+            color: #475569;
+        }
+        .manual-item-add-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #1e293b;
+            border: 1px dashed #334155;
+            border-radius: 8px;
+            color: #94a3b8;
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            width: 100%;
+            justify-content: center;
+            transition: all 0.2s;
+            margin-top: 6px;
+        }
+        .manual-item-add-btn:hover {
+            border-color: #4f46e5;
+            color: #818cf8;
+            background: #1e1b4b;
+        }
+        .manual-items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+        .manual-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e293b;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            border: 1px solid #334155;
+        }
+        .manual-item-row span:first-child {
+            color: #e2e8f0;
+            font-weight: 500;
+            flex: 1;
+            margin-right: 8px;
+            word-break: break-word;
+        }
+        .manual-item-row .manual-price {
+            color: #10b981;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .manual-item-remove {
+            background: none;
+            border: none;
+            color: #f87171;
+            cursor: pointer;
+            padding: 0 0 0 8px;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        .manual-item-remove:hover {
+            color: #ef4444;
+        }
+        .remarque-badge {
+            font-size: 10px;
+            color: #4f46e5;
+            background: #1e1b4b;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-weight: 400;
+            margin-left: 4px;
+        }
+
+        /* ★ NOUVEAU — Frais rapides (chips) */
+        .frais-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+        .frais-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.18s;
+            white-space: nowrap;
+        }
+        .frais-chip i { font-size: 10px; opacity: 0.8; }
+        .frais-chip:hover {
+            border-color: #6366f1;
+            color: #a5b4fc;
+            background: #1e1b4b;
+        }
+        .frais-chip.custom-chip {
+            border-style: dashed;
+            color: #64748b;
+        }
+        .frais-chip.custom-chip:hover {
+            border-color: #6366f1;
+            color: #a5b4fc;
+            background: #1e1b4b;
+        }
+        /* items ajoutés */
+        .frais-added-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 6px;
+        }
+        .frais-added-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 7px;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .frais-added-row .frais-name {
+            color: #cbd5e1;
+            font-weight: 500;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-right: 8px;
+        }
+        .frais-added-row .frais-price {
+            color: #6ee7b7;
+            font-weight: 600;
+            white-space: nowrap;
+            font-size: 12px;
+            margin-right: 6px;
+        }
+        .frais-added-row .frais-note {
+            font-size: 9px;
+            color: #475569;
+            background: #1e293b;
+            border-radius: 3px;
+            padding: 1px 4px;
+            margin-right: 6px;
+            white-space: nowrap;
+        }
+        .frais-remove {
+            background: none;
+            border: none;
+            color: #475569;
+            cursor: pointer;
+            padding: 0;
+            font-size: 11px;
+            flex-shrink: 0;
+            line-height: 1;
+            transition: color 0.15s;
+        }
+        .frais-remove:hover { color: #f87171; }
+
+        /* ★ FLOATING CHECKOUT BUTTON */
+        .pos-cart-actions { padding: 0; border-top: none; }
+
+        /* Espace réservé pour que le bouton fixe ne cache pas le contenu */
+        .pos-cart { padding-bottom: 68px !important; }
+
+        #checkoutFloating {
+            position: fixed;
+            bottom: 0;
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            color: #fff;
+            background: #059669;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.12s;
+            box-shadow: 0 -3px 20px rgba(5,150,105,0.35);
+        }
+        #checkoutFloating:hover { background: #047857; }
+        #checkoutFloating:active { transform: scaleY(0.97); }
+        #checkoutFloating .co-icon {
+            width: 34px; height: 34px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px; flex-shrink: 0;
+        }
+        #checkoutFloating .co-label {
+            display: flex; flex-direction: column; align-items: flex-start; line-height: 1.25;
+        }
+        #checkoutFloating .co-label small {
+            font-size: 11px; opacity: 0.8; font-weight: 400;
+        }
+        #checkoutFloating .co-label strong {
+            font-size: 15px; font-weight: 700;
+        }
+        #checkoutFloating .co-total {
+            margin-left: auto;
+            font-size: 15px; font-weight: 800;
+            background: rgba(255,255,255,0.15);
+            padding: 4px 10px; border-radius: 6px;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="sidebar-logo-icon">
+                        <i class="fas fa-cash-register"></i>
+                    </div>
+                    <div class="sidebar-logo-text">
+                        <h2>TechFlow</h2>
+                        <span>Point de Vente</span>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Principal</div>
+                    <a href="/index.html" class="nav-item admin-only">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/pos.html" class="nav-item active">
+                        <i class="fas fa-cash-register"></i>
+                        <span>Point de Vente</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Gestion</div>
+                    <a href="/inventory.html" class="nav-item">
+                        <i class="fas fa-boxes"></i>
+                        <span>Inventaire</span>
+                    </a>
+                    <a href="/sales.html" class="nav-item">
+                        <i class="fas fa-receipt"></i>
+                        <span>Ventes</span>
+                    </a>
+                    <a href="/clients.html" class="nav-item">
+                        <i class="fas fa-users"></i>
+                        <span>Clients</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section admin-only">
+                    <div class="nav-section-title">Administration</div>
+                    <a href="/profits.html" class="nav-item">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Profits</span>
+                    </a>
+                    <a href="/treasury.html" class="nav-item">
+                        <i class="fas fa-wallet"></i>
+                        <span>Trésorerie</span>
+                    </a>
+                    <a href="/users.html" class="nav-item">
+                        <i class="fas fa-user-cog"></i>
+                        <span>Utilisateurs</span>
+                    </a>
+                    <a href="/config.html" class="nav-item">
+                        <i class="fas fa-cog"></i>
+                        <span>Configuration</span>
+                    </a>
+                </div>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">AD</div>
+                    <div class="user-details">
+                        <h4>Admin</h4>
+                        <span>Administrateur</span>
+                    </div>
+                </div>
+                <button class="btn-logout" onclick="Auth.logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Déconnexion
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <div class="page-title">
+                    <h1>Point de Vente</h1>
+                    <p>Effectuer une nouvelle vente</p>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-secondary" onclick="showPrintHistory()">
+                        <i class="fas fa-history"></i> Historique des impressions
+                    </button>
+                    <button class="btn btn-primary admin-only" onclick="Inventory.showAddModal()">
+                        <i class="fas fa-plus"></i> Nouveau produit
+                    </button>
+                </div>
+            </header>
+            
+            <div class="page-body">
+                <div class="pos-container">
+                    <!-- Products Grid -->
+                    <div class="pos-products">
+                        <div class="pos-products-header">
+                            <div class="pos-search">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="productSearch" placeholder="Rechercher un produit ou scanner code-barre...">
+                            </div>
+                        </div>
+                        
+                        <div class="pos-categories" id="categoriesContainer">
+                            <button class="pos-category active" onclick="Products.setCategory('all')">Tous</button>
+                        </div>
+                        
+                        <div class="pos-products-grid" id="productsGrid">
+                            <div class="text-center text-muted" style="grid-column:1/-1;padding:40px;">
+                                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                <p class="mt-2">Chargement des produits...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cart -->
+                    <div class="pos-cart">
+                        <!-- Cart header -->
+                        <div class="pos-cart-header">
+                            <h3><i class="fas fa-shopping-cart"></i> Commande <span class="badge badge-info" id="cartCount" style="display:none;">0</span></h3>
+                            <button class="btn btn-sm btn-secondary" onclick="Cart.clear()" title="Vider le panier">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+
+                        <!-- Items list -->
+                        <div class="pos-cart-items" id="cartItems">
+                            <div class="pos-cart-empty">
+                                <i class="fas fa-shopping-cart"></i>
+                                <p>Panier vide</p>
+                                <small>Cliquez sur un article pour l'ajouter</small>
+                            </div>
+                        </div>
+
+                        <!-- Summary -->
+                        <div class="pos-cart-summary" id="cartSummary">
+                            <!-- Discount row -->
+                            <div class="pos-discount-input" style="display:flex;gap:6px;margin-bottom:10px;">
+                                <select id="discountType" style="width:64px;padding:6px 8px;background:var(--bg-input);border:1px solid var(--border-color);border-radius:4px;color:var(--text-primary);font-family:inherit;font-size:12px;">
+                                    <option value="percent">%</option>
+                                    <option value="fixed">Ar</option>
+                                </select>
+                                <input type="number" id="discountValue" placeholder="Remise" min="0"
+                                    style="flex:1;padding:6px 10px;background:var(--bg-input);border:1px solid var(--border-color);border-radius:4px;color:var(--text-primary);font-family:inherit;font-size:12px;">
+                            </div>
+
+                            <!-- Totals -->
+                            <div style="background:var(--bg-input);border-radius:6px;padding:10px 12px;margin-bottom:10px;">
+                                <div class="pos-cart-row" style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);padding:2px 0;">
+                                    <span>Sous-total</span><span id="cartSubtotal">0 Ar</span>
+                                </div>
+                                <div class="pos-cart-row" style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);padding:2px 0;">
+                                    <span>Remise</span><span id="cartDiscount" style="color:var(--danger);">− 0 Ar</span>
+                                </div>
+                                <div style="height:1px;background:var(--border-color);margin:6px 0;"></div>
+                                <div class="pos-cart-row total" style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;padding:2px 0;">
+                                    <span>TOTAL</span>
+                                    <span id="cartTotal" style="color:var(--accent);">0 Ar</span>
+                                </div>
+                            </div>
+
+                            <!-- Payment methods -->
+                            <div style="margin-bottom:10px;">
+                                <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px;font-weight:600;">Paiement</div>
+                                <div class="payment-methods" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+                                    <div class="payment-method-option">
+                                        <input type="radio" name="paymentMethod" value="cash" id="cash" checked>
+                                        <label for="cash"><i class="fas fa-money-bill-wave"></i><span>Cash</span></label>
+                                    </div>
+                                    <div class="payment-method-option">
+                                        <input type="radio" name="paymentMethod" value="mvola" id="mvola">
+                                        <label for="mvola"><i class="fas fa-mobile-alt"></i><span>Mvola</span></label>
+                                    </div>
+                                    <div class="payment-method-option">
+                                        <input type="radio" name="paymentMethod" value="airtel_money" id="airtel">
+                                        <label for="airtel"><i class="fas fa-mobile-alt"></i><span>Airtel</span></label>
+                                    </div>
+                                    <div class="payment-method-option">
+                                        <input type="radio" name="paymentMethod" value="orange_money" id="orange">
+                                        <label for="orange"><i class="fas fa-mobile-alt"></i><span>Orange</span></label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Client -->
+                            <div style="margin-bottom:10px;">
+                                <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px;font-weight:600;">Client (optionnel)</div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                                    <input type="text" id="clientName" class="form-control" placeholder="Nom" style="padding:6px 10px;font-size:12px;">
+                                    <input type="text" id="clientPhone" class="form-control" placeholder="Téléphone" style="padding:6px 10px;font-size:12px;">
+                                </div>
+                            </div>
+
+                            <!-- Note -->
+                            <div style="margin-bottom:10px;">
+                                <textarea id="saleRemarque" rows="1" class="form-control"
+                                    placeholder="Note interne..." style="font-size:12px;padding:6px 10px;resize:none;"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Checkout button -->
+                        <div class="pos-cart-actions"></div>
+                        <button id="checkoutFloating" onclick="POSCheckout()">
+                            <span class="co-icon"><i class="fas fa-file-invoice"></i></span>
+                            <span class="co-label">
+                                <small>Valider &amp; PDF</small>
+                                <strong>Encaisser</strong>
+                            </span>
+                            <span class="co-total" id="checkoutTotal">0 Ar</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Nouveau Produit (Admin) -->
+    <div class="modal-overlay" id="productModal">
+        <div class="modal" style="max-width:600px;">
+            <div class="modal-header">
+                <h3 id="productModalTitle">Nouveau Produit</h3>
+                <button class="modal-close" onclick="Modal.hide('productModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="productForm" enctype="multipart/form-data">
+                    <input type="hidden" id="productId" name="id">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productName">Nom du produit *</label>
+                            <input type="text" id="productName" name="name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productCategory">Catégorie</label>
+                            <input type="text" id="productCategory" name="category" class="form-control" list="categoryList">
+                            <datalist id="categoryList"></datalist>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productPurchasePrice">Prix d'achat (Ar)</label>
+                            <input type="number" id="productPurchasePrice" name="purchase_price" class="form-control" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="productSalePrice">Prix de vente (Ar) *</label>
+                            <input type="number" id="productSalePrice" name="sale_price" class="form-control" required min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productQuantity">Quantité</label>
+                            <input type="number" id="productQuantity" name="quantity" class="form-control" value="0" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="productMinStock">Stock minimum</label>
+                            <input type="number" id="productMinStock" name="min_stock" class="form-control" value="5" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productBarcode">Code-barre</label>
+                            <input type="text" id="productBarcode" name="barcode" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="productImage">Image</label>
+                            <input type="file" id="productImage" name="image" class="form-control" accept="image/*">
+                            <div id="imagePreview" class="mt-2"></div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="Modal.hide('productModal')">Annuler</button>
+                <button class="btn btn-primary" onclick="Inventory.save()">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Réappro rapide -->
+    <div class="modal-overlay" id="quickRestockModal">
+        <div class="modal" style="max-width:400px;">
+            <div class="modal-body">
+                <input type="hidden" id="restockProductId">
+                <div class="restock-product-info" style="background:#f8fafc;padding:15px;border-radius:10px;margin-bottom:20px;">
+                    <h4 id="restockProductName" style="margin-bottom:8px;"></h4>
+                    <p style="color:#64748b;font-size:13px;">
+                        Stock actuel: <strong id="restockCurrentStock">0</strong> unités
+                    </p>
+                </div>
+                <div class="form-group">
+                    <label for="restockQuantity">Quantité à ajouter *</label>
+                    <input type="number" id="restockQuantity" class="form-control" min="1" placeholder="Ex: 10" required>
+                    <p class="form-hint">Cette quantité sera ajoutée au stock actuel</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="Modal.hide('quickRestockModal')">Annuler</button>
+                <button class="btn btn-success" onclick="POS.saveRestock()">
+                    <i class="fas fa-plus"></i> Ajouter au stock
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Historique impressions -->
+    <div class="modal-overlay" id="printHistoryModal">
+        <div class="modal" style="max-width:700px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-history"></i> Historique des impressions</h3>
+                <button class="modal-close" onclick="Modal.hide('printHistoryModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="table-container" style="max-height:400px;overflow-y:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>N° Facture</th>
+                                <th>Date</th>
+                                <th>Client</th>
+                                <th>Total</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="printHistoryBody">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Chargement...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container pour modals dynamiques -->
+    <div id="productPreviewContainer"></div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // ============ POS SPECIFIC ============
+        const POS = {
+            showRestock(productId, productName, currentStock) {
+                document.getElementById('restockProductId').value = productId;
+                document.getElementById('restockProductName').textContent = productName;
+                document.getElementById('restockCurrentStock').textContent = currentStock;
+                document.getElementById('restockQuantity').value = '';
+                Modal.show('quickRestockModal');
+            },
+            
+            async saveRestock() {
+                const productId = document.getElementById('restockProductId').value;
+                const quantity = document.getElementById('restockQuantity').value;
+                
+                if (!quantity || quantity <= 0) {
+                    Toast.error('Veuillez entrer une quantité valide');
+                    return;
+                }
+                
+                try {
+                    await API.post(`/api/products/${productId}/add-stock`, { 
+                        quantity: parseInt(quantity) 
+                    });
+                    Toast.success('Stock mis à jour avec succès');
+                    Modal.hide('quickRestockModal');
+                    Products.load();
+                } catch (error) {
+                    Toast.error(error.message);
+                }
+            },
+            
+            async showPreview(productId) {
+                try {
+                    const product = await API.get(`/api/products/${productId}`);
+                    
+                    const previewHtml = `
+                        <div class="modal-overlay" id="productPreviewModal">
+                            <div class="modal" style="max-width:500px;">
+                                <div class="modal-header">
+                                    <h3>Aperçu du produit</h3>
+                                    <button class="modal-close" onclick="POS.closePreview()">&times;</button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="preview-container">
+                                        <div class="preview-image">
+                                            ${product.image ? 
+                                                `<img src="${product.image}" alt="${product.name}" style="max-width:100%;border-radius:8px;">` : 
+                                                `<div class="no-image"><i class="fas fa-box fa-4x"></i></div>`
+                                            }
+                                        </div>
+                                        <div class="preview-info">
+                                            <h4>${product.name}</h4>
+                                            <div class="preview-details">
+                                                <div class="detail-row">
+                                                    <span class="label">Prix:</span>
+                                                    <span class="value">${Utils.formatCurrency(product.sale_price)}</span>
+                                                </div>
+                                                <div class="detail-row">
+                                                    <span class="label">Stock:</span>
+                                                    <span class="value ${product.quantity <= 0 ? 'text-danger' : product.quantity <= product.min_stock ? 'text-warning' : ''}">
+                                                        ${product.quantity} unités
+                                                    </span>
+                                                </div>
+                                                ${product.category ? `
+                                                <div class="detail-row">
+                                                    <span class="label">Catégorie:</span>
+                                                    <span class="value">${product.category}</span>
+                                                </div>` : ''}
+                                                ${product.barcode ? `
+                                                <div class="detail-row">
+                                                    <span class="label">Code-barre:</span>
+                                                    <span class="value">${product.barcode}</span>
+                                                </div>` : ''}
+                                                ${product.purchase_price ? `
+                                                <div class="detail-row">
+                                                    <span class="label">Prix d'achat:</span>
+                                                    <span class="value">${Utils.formatCurrency(product.purchase_price)}</span>
+                                                </div>` : ''}
+                                                <div class="detail-row">
+                                                    <span class="label">Marge:</span>
+                                                    <span class="value ${product.purchase_price ? (product.sale_price - product.purchase_price) >= 0 ? 'text-success' : 'text-danger' : ''}">
+                                                        ${product.purchase_price ? Utils.formatCurrency(product.sale_price - product.purchase_price) : 'N/A'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="preview-actions">
+                                                <button class="btn btn-primary" onclick="Cart.add(${JSON.stringify(product).replace(/"/g, '&quot;')}); POS.closePreview()">
+                                                    <i class="fas fa-cart-plus"></i> Ajouter
+                                                </button>
+                                                <button class="btn btn-secondary" onclick="POS.closePreview()">
+                                                    Fermer
+                                                </button>
+                                                ${Auth.isAdmin() ? `
+                                                <button class="btn btn-outline-primary" onclick="Inventory.edit(${product.id}); POS.closePreview()">
+                                                    <i class="fas fa-edit"></i> Modifier
+                                                </button>` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    const container = document.getElementById('productPreviewContainer');
+                    container.innerHTML = previewHtml;
+                    Modal.show('productPreviewModal');
+                    
+                    this.escapeListener = function(e) {
+                        if (e.key === 'Escape') POS.closePreview();
+                    };
+                    document.addEventListener('keydown', this.escapeListener);
+                    
+                } catch (error) {
+                    Toast.error('Erreur lors du chargement du produit');
+                    console.error(error);
+                }
+            },
+            
+            closePreview() {
+                const modal = document.getElementById('productPreviewModal');
+                if (modal) {
+                    modal.style.display = 'none';
+                    if (this.escapeListener) {
+                        document.removeEventListener('keydown', this.escapeListener);
+                    }
+                }
+            }
+        };
+        
+        // Override Products.render pour la page POS
+        const originalProductsRender = Products.render;
+        Products.render = function() {
+            const grid = document.getElementById('productsGrid');
+            if (!grid) return;
+
+            const filtered = this.filter();
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="text-center text-muted" style="grid-column:1/-1;padding:40px;"><i class="fas fa-search fa-2x"></i><p class="mt-2">Aucun article trouvé</p></div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(product => {
+                const isSvc    = product.product_type === 'service';
+                const isOut    = !isSvc && product.quantity <= 0;
+                const isLow    = !isSvc && product.quantity > 0 && product.quantity <= (product.min_stock || 5);
+                const disabled = isOut;
+
+                let stockClass = '', stockText = '';
+                if (isSvc)       { stockClass = '';    stockText = 'Service'; }
+                else if (isOut)  { stockClass = 'out'; stockText = 'Rupture'; }
+                else if (isLow)  { stockClass = 'low'; stockText = `Stock faible: ${product.quantity}`; }
+                else             { stockText = `Stock: ${product.quantity}`; }
+
+                const pJson     = JSON.stringify(product).replace(/"/g, '&quot;');
+                const cardStyle = isSvc ? 'border-color:rgba(168,85,247,0.35);' : '';
+                const imgIcon   = isSvc ? 'fa-concierge-bell' : 'fa-box';
+                const imgColor  = isSvc ? '#a78bfa' : '#cbd5e1';
+                const svcTag    = isSvc ? '<div style="position:absolute;top:6px;right:6px;background:rgba(124,58,237,0.9);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;">SERVICE</div>' : '';
+                const btnStyle  = isSvc ? 'background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;' : '';
+
+                return `
+                    <div class="pos-product-card ${!isSvc && isOut ? 'out-of-stock' : ''}" style="${cardStyle}position:relative;">
+                        <div class="pos-product-image" onclick="${disabled ? '' : 'Cart.add(' + pJson + ')'}" style="cursor:${disabled ? 'default' : 'pointer'}">
+                            ${product.image
+                                ? `<img src="${product.image}" alt="${product.name}" style="height:120px;object-fit:cover;width:100%;border-radius:4px;">`
+                                : `<div style="height:120px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.03);border-radius:4px;"><i class="fas ${imgIcon} fa-3x" style="color:${imgColor};"></i></div>`}
+                            ${svcTag}
+                        </div>
+                        <div class="pos-product-name" title="${product.name}" onclick="${disabled ? '' : 'Cart.add(' + pJson + ')'}" style="cursor:${disabled ? 'default' : 'pointer'}">
+                            ${product.name}
+                        </div>
+                        <div class="pos-product-price" onclick="${disabled ? '' : 'Cart.add(' + pJson + ')'}" style="cursor:${disabled ? 'default' : 'pointer'}${isSvc ? ';color:#a78bfa;' : ''}">
+                            ${Utils.formatCurrency(product.sale_price)}
+                        </div>
+                        <div class="pos-product-stock ${stockClass}">${stockText}</div>
+                        <div class="pos-product-actions">
+                            <button class="btn btn-sm btn-primary" style="${btnStyle}" onclick="Cart.add(${pJson})" ${disabled ? 'disabled' : ''}>
+                                <i class="fas fa-cart-plus"></i> Ajouter
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+        
+        // ============ HISTORIQUE IMPRESSIONS ============
+        function showPrintHistory() {
+            loadPrintHistory();
+            Modal.show('printHistoryModal');
+        }
+        
+        async function loadPrintHistory() {
+            try {
+                const sales = await API.get('/api/sales?period=month');
+                const tbody = document.getElementById('printHistoryBody');
+                
+                if (sales.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Aucune facture</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = sales.map(sale => `
+                    <tr>
+                        <td><strong>${sale.invoice_number}</strong></td>
+                        <td>${Utils.formatDateTime(sale.created_at)}</td>
+                        <td>${sale.client_name || 'Anonyme'}</td>
+                        <td>${Utils.formatCurrency(sale.total)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="Sales.printInvoice(${sale.id})">
+                                <i class="fas fa-download"></i> PDF
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                Toast.error('Erreur lors du chargement');
+            }
+        }
+        
+        // Charger catégories
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const categories = await API.get('/api/categories');
+                const datalist = document.getElementById('categoryList');
+                if (datalist) {
+                    datalist.innerHTML = categories.map(c => `<option value="${c}">`).join('');
+                }
+                Products.categories = categories;
+                Products.renderCategories();
+            } catch(e) {
+                console.error('Erreur lors du chargement des catégories:', e);
+            }
+        });
+
+        // Checkout simple (sans frais)
+        async function POSCheckout() {
+            if (Cart.items.length === 0) { Toast.error('Le panier est vide'); return; }
+            await Sales.checkout();
+        }
+
+                // Sales.checkout — sans frais supplémentaires
+        const _origCheckout = Sales.checkout.bind(Sales);
+        Sales.checkout = async function() {
+            if (Cart.items.length === 0) {
+                Toast.error('Le panier est vide');
+                return;
+            }
+            const clientName    = document.getElementById('clientName')?.value  || '';
+            const clientPhone   = document.getElementById('clientPhone')?.value || '';
+            const remarque      = document.getElementById('saleRemarque')?.value || '';
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+
+            if (!paymentMethod) {
+                Toast.error('Veuillez sélectionner un mode de paiement');
+                return;
+            }
+
+            const saleData = {
+                client_name:    clientName,
+                client_phone:   clientPhone,
+                remarque:       remarque,
+                items:          Cart.items,
+                subtotal:       Cart.getSubtotal(),
+                discount_type:  Cart.discountType,
+                discount_value: Cart.getDiscount(),
+                total:          Cart.getTotal(),
+                payment_method: paymentMethod
+            };
+
+            try {
+                const result = await API.post('/api/sales', saleData);
+                Toast.success('Vente enregistrée !');
+                const sale   = await API.get('/api/sales/' + result.id);
+                const config = await API.get('/api/config');
+                await InvoicePDF.generate(sale, config, true);
+                Cart.clear();
+                document.getElementById('clientName').value    = '';
+                document.getElementById('clientPhone').value   = '';
+                document.getElementById('discountValue').value = '';
+                if (document.getElementById('saleRemarque'))
+                    document.getElementById('saleRemarque').value = '';
+                Products.load();
+            } catch (error) {
+                Toast.error(error.message);
+            }
+        };
+
+        // ============ OVERRIDE InvoicePDF.createInvoiceHTML — affiche les frais ============
+        InvoicePDF.createInvoiceHTML = function(sale, config) {
+            const items      = sale.items  || [];
+            const fraisItems = sale.frais  || [];
+
+            const fraisTotal    = fraisItems.reduce((s, f) => s + f.amount, 0);
+            const discountValue = sale.discount_value || 0;
+
+            // Section frais HTML (vide si aucun frais)
+            const fraisHTML = fraisItems.length > 0 ? `
+                <div style="margin-top:6px;padding-top:6px;border-top:1px dotted #ccc;">
+                    ${fraisItems.map(f => `
+                    <div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 0;color:#333;">
+                        <span style="font-style:italic;">${f.name}</span>
+                        <span>${Utils.formatCurrency(f.amount)}</span>
+                    </div>`).join('')}
+                </div>
+            ` : '';
+
+            return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Facture ${sale.invoice_number}</title>
+    <style>
+        @page { size: 80mm auto; margin: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', 'Lucida Console', monospace;
+            font-size: 12px; line-height: 1.4;
+            width: 80mm; padding: 8mm 5mm;
+            background: white; color: #000;
+        }
+        .invoice-header { text-align:center; padding-bottom:8px; border-bottom:2px dashed #000; margin-bottom:8px; }
+        .invoice-header img { max-width:45mm; max-height:18mm; margin-bottom:5px; }
+        .company-name { font-size:18px; font-weight:bold; margin:5px 0; text-transform:uppercase; letter-spacing:1px; }
+        .company-info { font-size:11px; color:#333; margin:2px 0; }
+        .invoice-title { text-align:center; font-size:14px; font-weight:bold; margin:10px 0; padding:5px; background:#000; color:#fff; letter-spacing:2px; }
+        .invoice-info { margin-bottom:10px; font-size:11px; }
+        .invoice-info p { margin:3px 0; }
+        .invoice-info strong { display:inline-block; width:70px; }
+        .items-header { display:flex; justify-content:space-between; font-weight:bold; font-size:11px; padding:5px 0; border-top:1px solid #000; border-bottom:1px solid #000; margin-bottom:5px; }
+        .items-list { margin-bottom:6px; }
+        .item { padding:4px 0; border-bottom:1px dotted #ccc; }
+        .item-name { font-size:11px; font-weight:500; }
+        .item-details { display:flex; justify-content:space-between; font-size:11px; color:#555; margin-top:2px; }
+        .totals { border-top:2px dashed #000; padding-top:8px; margin-top:4px; }
+        .total-row { display:flex; justify-content:space-between; font-size:12px; margin:4px 0; }
+        .total-row.frais-row { font-size:11px; color:#444; padding-left:4px; }
+        .total-row.frais-row span:first-child { font-style:italic; }
+        .total-row.frais-label { font-size:11px; font-weight:bold; color:#000; border-top:1px dotted #999; padding-top:4px; margin-top:2px; }
+        .total-row.grand-total { font-size:16px; font-weight:bold; border-top:2px solid #000; border-bottom:2px solid #000; padding:8px 0; margin-top:8px; }
+        .payment-info { text-align:center; margin:12px 0; padding:8px; background:#f5f5f5; border-radius:4px; font-size:11px; }
+        .invoice-footer { text-align:center; margin-top:15px; padding-top:10px; border-top:2px dashed #000; font-size:11px; }
+        .footer-message { font-weight:bold; margin-bottom:5px; }
+        .footer-note { font-size:10px; color:#666; margin-top:8px; }
+        @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+    </style>
+</head>
+<body>
+    <div class="invoice-header">
+        ${config.logo ? `<img src="${config.logo}" alt="Logo">` : ''}
+        <div class="company-name">${config.name || 'TECHFLOW POS'}</div>
+        ${config.address ? `<div class="company-info">${config.address}</div>` : ''}
+        ${config.phone   ? `<div class="company-info">Tél: ${config.phone}</div>` : ''}
+        ${config.email   ? `<div class="company-info">${config.email}</div>` : ''}
+        ${config.invoice_header ? `<div class="company-info">${config.invoice_header}</div>` : ''}
+    </div>
+
+    <div class="invoice-title">FACTURE</div>
+
+    <div class="invoice-info">
+        <p><strong>N°:</strong> ${sale.invoice_number}</p>
+        <p><strong>Date:</strong> ${Utils.formatDateTime(sale.created_at)}</p>
+        <p><strong>Client:</strong> ${sale.client_name || 'Client comptoir'}</p>
+        ${sale.client_phone ? `<p><strong>Tél:</strong> ${sale.client_phone}</p>` : ''}
+        <p><strong>Vendeur:</strong> ${sale.user_name || 'N/A'}</p>
+    </div>
+
+    <div class="items-header">
+        <span>Article</span>
+        <span>Total</span>
+    </div>
+
+    <div class="items-list">
+        ${items.map(item => `
+        <div class="item">
+            <div class="item-name">${item.product_name}</div>
+            <div class="item-details">
+                <span>${item.quantity} x ${Utils.formatCurrency(item.unit_price)}</span>
+                <span><strong>${Utils.formatCurrency(item.total)}</strong></span>
+            </div>
+        </div>`).join('')}
+    </div>
+
+    <div class="totals">
+        <div class="total-row">
+            <span>Sous-total:</span>
+            <span>${Utils.formatCurrency(sale.subtotal)}</span>
+        </div>
+        ${discountValue > 0 ? `
+        <div class="total-row">
+            <span>Remise:</span>
+            <span>- ${Utils.formatCurrency(discountValue)}</span>
+        </div>` : ''}
+
+        ${fraisItems.length > 0 ? `
+        <div class="total-row frais-label">
+            <span>Frais supplémentaires:</span>
+            <span></span>
+        </div>
+        ${fraisItems.map(f => `
+        <div class="total-row frais-row">
+            <span>${f.name}</span>
+            <span>+ ${Utils.formatCurrency(f.amount)}</span>
+        </div>`).join('')}
+        ` : ''}
+
+        <div class="total-row grand-total">
+            <span>TOTAL À PAYER:</span>
+            <span>${Utils.formatCurrency(sale.total)}</span>
+        </div>
+    </div>
+
+    <div class="payment-info">
+        Mode de paiement: ${this.getPaymentMethodLabel(sale.payment_method)}
+    </div>
+
+    <div class="invoice-footer">
+        <div class="footer-message">${config.invoice_footer || 'Merci pour votre achat !'}</div>
+        <div class="footer-note">Conservez ce reçu pour tout réclamation ou retour.</div>
+    </div>
+</body>
+</html>`;
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Favicon TECHFLOW POS -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <title>Trésorerie - TechFlow </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="sidebar-logo-icon">
+                        <i class="fas fa-cash-register"></i>
+                    </div>
+                    <div class="sidebar-logo-text">
+                        <h2> TechFlow </h2>
+                        <span>Point de Vente</span>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Principal</div>
+                    <a href="/index.html" class="nav-item admin-only">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/pos.html" class="nav-item">
+                        <i class="fas fa-cash-register"></i>
+                        <span>Point de Vente</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Gestion</div>
+                    <a href="/inventory.html" class="nav-item">
+                        <i class="fas fa-boxes"></i>
+                        <span>Inventaire</span>
+                    </a>
+                    <a href="/sales.html" class="nav-item">
+                        <i class="fas fa-receipt"></i>
+                        <span>Ventes</span>
+                    </a>
+                    <a href="/clients.html" class="nav-item">
+                        <i class="fas fa-users"></i>
+                        <span>Clients</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section admin-only">
+                    <div class="nav-section-title">Administration</div>
+                    <a href="/profits.html" class="nav-item">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Profits</span>
+                    </a>
+                    <a href="/treasury.html" class="nav-item active">
+                        <i class="fas fa-wallet"></i>
+                        <span>Trésorerie</span>
+                    </a>
+                    <a href="/users.html" class="nav-item">
+                        <i class="fas fa-user-cog"></i>
+                        <span>Utilisateurs</span>
+                    </a>
+                    <a href="/config.html" class="nav-item">
+                        <i class="fas fa-cog"></i>
+                        <span>Configuration</span>
+                    </a>
+                </div>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">AD</div>
+                    <div class="user-details">
+                        <h4>Admin</h4>
+                        <span>Administrateur</span>
+                    </div>
+                </div>
+                <button class="btn-logout" onclick="Auth.logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Déconnexion
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <div class="page-title">
+                    <h1>Trésorerie</h1>
+                    <p>Gestion financière et suivi des dépenses</p>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-secondary" onclick="Treasury.showGoalModal()">
+                        <i class="fas fa-bullseye"></i> Nouvel Objectif
+                    </button>
+                    <button class="btn btn-primary" onclick="Treasury.showExpenseModal()">
+                        <i class="fas fa-plus"></i> Nouvelle Dépense
+                    </button>
+                </div>
+            </header>
+            
+            <div class="page-body">
+                <!-- Stats -->
+                <div class="treasury-stats">
+                    <div class="treasury-card">
+                        <h4>Profit Brut (Mois)</h4>
+                        <div class="value positive" id="totalProfit">0 Ar</div>
+                    </div>
+                    <div class="treasury-card">
+                        <h4>Dépenses (Mois)</h4>
+                        <div class="value negative" id="totalExpenses">0 Ar</div>
+                    </div>
+                    <div class="treasury-card">
+                        <h4>Profit Net</h4>
+                        <div class="value positive" id="netProfit">0 Ar</div>
+                    </div>
+                    <div class="treasury-card">
+                        <h4>Objectifs Atteints</h4>
+                        <div class="value" id="goalsCompleted">0</div>
+                    </div>
+                </div>
+                
+                <div class="grid-2">
+                    <!-- Expenses -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Dépenses</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container" style="max-height:400px;overflow-y:auto;">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Description</th>
+                                            <th>Catégorie</th>
+                                            <th>Montant</th>
+                                            <th>Type</th>
+                                            <th>Statut</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="expensesTableBody">
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted">Chargement...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Goals -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Objectifs Financiers</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="goals-list" id="goalsContainer">
+                                <p class="text-muted">Chargement...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Expense Modal -->
+    <div class="modal-overlay" id="expenseModal">
+        <div class="modal" style="max-width:500px;">
+            <div class="modal-header">
+                <h3>Nouvelle Dépense</h3>
+                <button class="modal-close" onclick="Modal.hide('expenseModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="expenseForm">
+                    <div class="form-group">
+                        <label for="expenseDescription">Description *</label>
+                        <input type="text" id="expenseDescription" class="form-control" required placeholder="Ex: Achat fournitures">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="expenseAmount">Montant (Ar) *</label>
+                            <input type="number" id="expenseAmount" class="form-control" required min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="expenseCategory">Catégorie</label>
+                            <select id="expenseCategory" class="form-control">
+                                <option value="">-- Sélectionner --</option>
+                                <option value="Loyer">Loyer</option>
+                                <option value="Électricité">Électricité</option>
+                                <option value="Eau">Eau</option>
+                                <option value="Salaires">Salaires</option>
+                                <option value="Fournitures">Fournitures</option>
+                                <option value="Transport">Transport</option>
+                                <option value="Maintenance">Maintenance</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="expenseType">Type</label>
+                        <select id="expenseType" class="form-control">
+                            <option value="realized">Réalisée</option>
+                            <option value="planned">Prévue</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="Modal.hide('expenseModal')">Annuler</button>
+                <button class="btn btn-primary" onclick="Treasury.saveExpense()">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goal Modal -->
+    <div class="modal-overlay" id="goalModal">
+        <div class="modal" style="max-width:500px;">
+            <div class="modal-header">
+                <h3>Nouvel Objectif Financier</h3>
+                <button class="modal-close" onclick="Modal.hide('goalModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="goalForm">
+                    <div class="form-group">
+                        <label for="goalName">Nom de l'objectif *</label>
+                        <input type="text" id="goalName" class="form-control" required placeholder="Ex: Achat nouveau matériel">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="goalTarget">Montant cible (Ar) *</label>
+                            <input type="number" id="goalTarget" class="form-control" required min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="goalDeadline">Date limite</label>
+                            <input type="date" id="goalDeadline" class="form-control">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="Modal.hide('goalModal')">Annuler</button>
+                <button class="btn btn-primary" onclick="Treasury.saveGoal()">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>

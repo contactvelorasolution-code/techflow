@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <!-- Favicon TECHFLOW POS -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <title>Configuration - TechFlow </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="sidebar-logo-icon">
+                        <i class="fas fa-cash-register"></i>
+                    </div>
+                    <div class="sidebar-logo-text">
+                        <h2> TechFlow </h2>
+                        <span>Point de Vente</span>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Principal</div>
+                    <a href="/index.html" class="nav-item admin-only">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/pos.html" class="nav-item">
+                        <i class="fas fa-cash-register"></i>
+                        <span>Point de Vente</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Gestion</div>
+                    <a href="/inventory.html" class="nav-item">
+                        <i class="fas fa-boxes"></i>
+                        <span>Inventaire</span>
+                    </a>
+                    <a href="/sales.html" class="nav-item">
+                        <i class="fas fa-receipt"></i>
+                        <span>Ventes</span>
+                    </a>
+                    <a href="/clients.html" class="nav-item">
+                        <i class="fas fa-users"></i>
+                        <span>Clients</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section admin-only">
+                    <div class="nav-section-title">Administration</div>
+                    <a href="/profits.html" class="nav-item">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Profits</span>
+                    </a>
+                    <a href="/treasury.html" class="nav-item">
+                        <i class="fas fa-wallet"></i>
+                        <span>Trésorerie</span>
+                    </a>
+                    <a href="/users.html" class="nav-item">
+                        <i class="fas fa-user-cog"></i>
+                        <span>Utilisateurs</span>
+                    </a>
+                    <a href="/config.html" class="nav-item active">
+                        <i class="fas fa-cog"></i>
+                        <span>Configuration</span>
+                    </a>
+                </div>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">AD</div>
+                    <div class="user-details">
+                        <h4>Admin</h4>
+                        <span>Administrateur</span>
+                    </div>
+                </div>
+                <button class="btn-logout" onclick="Auth.logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Déconnexion
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <div class="page-title">
+                    <h1>Configuration</h1>
+                    <p>Paramètres de l'entreprise et des factures</p>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-primary" onclick="Config.save()">
+                        <i class="fas fa-save"></i> Enregistrer
+                    </button>
+                </div>
+            </header>
+            
+            <div class="page-body">
+                <form id="configForm" enctype="multipart/form-data">
+                    <div class="grid-2">
+                        <!-- Company Info -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-building"></i> Informations Entreprise</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="companyName">Nom de l'entreprise</label>
+                                    <input type="text" id="companyName" name="name" class="form-control" placeholder="Ex: Ma Boutique Informatique">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="companyLogo">Logo</label>
+                                    <input type="file" id="companyLogo" name="logo" class="form-control" accept="image/*">
+                                    <div id="logoPreview" class="mt-2"></div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="companyAddress">Adresse</label>
+                                    <textarea id="companyAddress" name="address" class="form-control" rows="2" placeholder="Ex: Lot IVG 123, Antananarivo"></textarea>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="companyPhone">Téléphone</label>
+                                        <input type="text" id="companyPhone" name="phone" class="form-control" placeholder="Ex: 034 00 000 00">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="companyEmail">Email</label>
+                                        <input type="email" id="companyEmail" name="email" class="form-control" placeholder="Ex: contact@boutique.mg">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="companyWebsite">Site web</label>
+                                    <input type="text" id="companyWebsite" name="website" class="form-control" placeholder="Ex: www.boutique.mg">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Invoice Settings -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-file-invoice"></i> Paramètres Facture</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="currency">Devise</label>
+                                        <select id="currency" name="currency" class="form-control">
+                                            <option value="Ar">Ariary (Ar)</option>
+                                            <option value="MGA">MGA</option>
+                                            <option value="EUR">Euro (€)</option>
+                                            <option value="USD">Dollar ($)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="taxRate">Taux TVA (%)</label>
+                                        <input type="number" id="taxRate" name="tax_rate" class="form-control" value="0" min="0" max="100">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="invoiceHeader">En-tête facture</label>
+                                    <textarea id="invoiceHeader" name="invoice_header" class="form-control" rows="2" placeholder="Texte affiché en haut de la facture (ex: NIF, STAT)"></textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="invoiceFooter">Pied de page facture</label>
+                                    <textarea id="invoiceFooter" name="invoice_footer" class="form-control" rows="3" placeholder="Ex: Merci pour votre achat ! Les articles ne sont ni repris ni échangés."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Preview -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h3><i class="fas fa-eye"></i> Aperçu Facture 80mm</h3>
+                        </div>
+                        <div class="card-body" style="display:flex;justify-content:center;">
+                            <div class="invoice-80mm" id="invoicePreview" style="border:1px dashed #ccc;background:#fff;">
+                                <div class="invoice-header">
+                                    <div id="previewLogo"></div>
+                                    <h2 id="previewName">Techflow</h2>
+                                    <p id="previewAddress">Adresse de l'entreprise</p>
+                                    <p id="previewPhone">Tél: 034 00 000 00</p>
+                                    <p id="previewHeader"></p>
+                                </div>
+                                
+                                <div class="invoice-info">
+                                    <p><strong>Facture N°:</strong> FAC-20240101-0001</p>
+                                    <p><strong>Date:</strong> 01/01/2024 10:30</p>
+                                    <p><strong>Client:</strong> Client exemple</p>
+                                </div>
+                                
+                                <div class="invoice-items">
+                                    <div class="invoice-item">
+                                        <span class="item-name">Produit exemple x2</span>
+                                        <span>20 000 Ar</span>
+                                    </div>
+                                    <div class="invoice-item">
+                                        <span class="item-name">Autre produit x1</span>
+                                        <span>15 000 Ar</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="invoice-totals">
+                                    <p>Sous-total: 35 000 Ar</p>
+                                    <p>Remise: 0 Ar</p>
+                                    <p class="total-line">TOTAL: 35 000 Ar</p>
+                                </div>
+                                
+                                <div class="invoice-footer" id="previewFooter">
+                                    Merci pour votre achat !
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // Live preview
+        document.getElementById('companyName').addEventListener('input', function() {
+            document.getElementById('previewName').textContent = this.value || 'Techflow';
+        });
+        
+        document.getElementById('companyAddress').addEventListener('input', function() {
+            document.getElementById('previewAddress').textContent = this.value || 'Adresse';
+        });
+        
+        document.getElementById('companyPhone').addEventListener('input', function() {
+            document.getElementById('previewPhone').textContent = 'Tél: ' + (this.value || '...');
+        });
+        
+        document.getElementById('invoiceHeader').addEventListener('input', function() {
+            document.getElementById('previewHeader').textContent = this.value;
+        });
+        
+        document.getElementById('invoiceFooter').addEventListener('input', function() {
+            document.getElementById('previewFooter').textContent = this.value || 'Merci pour votre achat !';
+        });
+        
+        document.getElementById('companyLogo').addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('logoPreview').innerHTML = `<img src="${e.target.result}" style="max-width:150px;">`;
+                    document.getElementById('previewLogo').innerHTML = `<img src="${e.target.result}" style="max-width:50mm;max-height:15mm;">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+</html>

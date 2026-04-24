@@ -1,0 +1,8 @@
+node_modules/
+database.sqlite
+*.sqlite
+.env
+*.bat
+server-backup.js
+public/js/app-backup.js
+public/catalog-backup.html

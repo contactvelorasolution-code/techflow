@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <!-- Favicon TECHFLOW POS -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <title>Clients - TechFlow </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="sidebar-logo-icon">
+                        <i class="fas fa-cash-register"></i>
+                    </div>
+                    <div class="sidebar-logo-text">
+                        <h2> TechFlow </h2>
+                        <span>Point de Vente</span>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Principal</div>
+                    <a href="/index.html" class="nav-item admin-only">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/pos.html" class="nav-item">
+                        <i class="fas fa-cash-register"></i>
+                        <span>Point de Vente</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Gestion</div>
+                    <a href="/inventory.html" class="nav-item">
+                        <i class="fas fa-boxes"></i>
+                        <span>Inventaire</span>
+                    </a>
+                    <a href="/sales.html" class="nav-item">
+                        <i class="fas fa-receipt"></i>
+                        <span>Ventes</span>
+                    </a>
+                    <a href="/clients.html" class="nav-item active">
+                        <i class="fas fa-users"></i>
+                        <span>Clients</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section admin-only">
+                    <div class="nav-section-title">Administration</div>
+                    <a href="/profits.html" class="nav-item">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Profits</span>
+                    </a>
+                    <a href="/treasury.html" class="nav-item">
+                        <i class="fas fa-wallet"></i>
+                        <span>Trésorerie</span>
+                    </a>
+                    <a href="/users.html" class="nav-item">
+                        <i class="fas fa-user-cog"></i>
+                        <span>Utilisateurs</span>
+                    </a>
+                    <a href="/config.html" class="nav-item">
+                        <i class="fas fa-cog"></i>
+                        <span>Configuration</span>
+                    </a>
+                </div>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">AD</div>
+                    <div class="user-details">
+                        <h4>Admin</h4>
+                        <span>Administrateur</span>
+                    </div>
+                </div>
+                <button class="btn-logout" onclick="Auth.logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Déconnexion
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <div class="page-title">
+                    <h1>Clients</h1>
+                    <p>Gérez votre base de clients</p>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-secondary" onclick="Clients.export()">
+                        <i class="fas fa-download"></i> Exporter CSV
+                    </button>
+                    <button class="btn btn-primary" onclick="Clients.showAddModal()">
+                        <i class="fas fa-plus"></i> Nouveau Client
+                    </button>
+                </div>
+            </header>
+            
+            <div class="page-body">
+                <!-- Search -->
+                <div class="inventory-header mb-4">
+                    <div class="inventory-search">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="form-control" placeholder="Rechercher par nom ou téléphone..." 
+                               oninput="Clients.search(this.value)">
+                    </div>
+                </div>
+                
+                <!-- Clients Grid -->
+                <div class="grid-2" id="clientsGrid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+                    <div class="text-center text-muted" style="grid-column:1/-1;padding:40px;">
+                        <i class="fas fa-spinner fa-spin fa-2x"></i>
+                        <p class="mt-2">Chargement...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Client Modal -->
+    <div class="modal-overlay" id="clientModal">
+        <div class="modal" style="max-width:500px;">
+            <div class="modal-header">
+                <h3 id="clientModalTitle">Nouveau Client</h3>
+                <button class="modal-close" onclick="Modal.hide('clientModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="clientForm">
+                    <input type="hidden" id="clientId">
+                    
+                    <div class="form-group">
+                        <label for="clientNameInput">Nom complet *</label>
+                        <input type="text" id="clientNameInput" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="clientPhoneInput">Téléphone</label>
+                        <input type="tel" id="clientPhoneInput" class="form-control" placeholder="034 00 000 00">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="clientEmail">Email</label>
+                        <input type="email" id="clientEmail" class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="clientAddress">Adresse</label>
+                        <textarea id="clientAddress" class="form-control" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="Modal.hide('clientModal')">Annuler</button>
+                <button class="btn btn-primary" onclick="Clients.save()">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Detail Modal -->
+    <div class="modal-overlay" id="clientDetailModal">
+        <div class="modal" style="max-width:700px;">
+            <div class="modal-header">
+                <h3>Fiche Client</h3>
+                <button class="modal-close" onclick="Modal.hide('clientDetailModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="clientDetailContent">
+                <!-- Content loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger admin-only" onclick="Clients.delete(document.getElementById('clientId').value)">
+                    <i class="fas fa-trash"></i> Supprimer
+                </button>
+                <button class="btn btn-secondary" onclick="Modal.hide('clientDetailModal')">Fermer</button>
+                <button class="btn btn-primary" id="editClientBtn">
+                    <i class="fas fa-edit"></i> Modifier
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>

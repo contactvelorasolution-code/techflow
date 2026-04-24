@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <title>Ventes - TechFlow</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        /* Frais badge dans la table */
+        .frais-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            background: #1e1b4b;
+            color: #a5b4fc;
+            border: 1px solid #3730a3;
+            border-radius: 4px;
+            padding: 1px 6px;
+            margin-left: 6px;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .frais-badge i { font-size: 9px; }
+
+        /* Détail modal — section frais */
+        .sale-frais-section {
+            margin: 14px 0 0;
+            border-top: 1px dashed #334155;
+            padding-top: 12px;
+        }
+        .sale-frais-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sale-frais-title i { color: #6366f1; font-size: 11px; }
+        .sale-frais-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+        .sale-frais-row .frais-name {
+            color: #cbd5e1;
+            font-style: italic;
+        }
+        .sale-frais-row .frais-amt {
+            color: #6ee7b7;
+            font-weight: 600;
+        }
+        .sale-frais-note {
+            font-size: 10px;
+            color: #475569;
+            background: #1e293b;
+            border-radius: 3px;
+            padding: 1px 5px;
+            margin: 0 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="sidebar-logo-icon"><i class="fas fa-cash-register"></i></div>
+                    <div class="sidebar-logo-text">
+                        <h2>TechFlow</h2>
+                        <span>Point de Vente</span>
+                    </div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Principal</div>
+                    <a href="/index.html" class="nav-item admin-only">
+                        <i class="fas fa-chart-line"></i><span>Dashboard</span>
+                    </a>
+                    <a href="/pos.html" class="nav-item">
+                        <i class="fas fa-cash-register"></i><span>Point de Vente</span>
+                    </a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Gestion</div>
+                    <a href="/inventory.html" class="nav-item">
+                        <i class="fas fa-boxes"></i><span>Inventaire</span>
+                    </a>
+                    <a href="/sales.html" class="nav-item active">
+                        <i class="fas fa-receipt"></i><span>Ventes</span>
+                    </a>
+                    <a href="/clients.html" class="nav-item">
+                        <i class="fas fa-users"></i><span>Clients</span>
+                    </a>
+                </div>
+                <div class="nav-section admin-only">
+                    <div class="nav-section-title">Administration</div>
+                    <a href="/profits.html" class="nav-item">
+                        <i class="fas fa-chart-pie"></i><span>Profits</span>
+                    </a>
+                    <a href="/treasury.html" class="nav-item">
+                        <i class="fas fa-wallet"></i><span>Trésorerie</span>
+                    </a>
+                    <a href="/users.html" class="nav-item">
+                        <i class="fas fa-user-cog"></i><span>Utilisateurs</span>
+                    </a>
+                    <a href="/config.html" class="nav-item">
+                        <i class="fas fa-cog"></i><span>Configuration</span>
+                    </a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">AD</div>
+                    <div class="user-details">
+                        <h4>Admin</h4>
+                        <span>Administrateur</span>
+                    </div>
+                </div>
+                <button class="btn-logout" onclick="Auth.logout()">
+                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="page-header">
+                <div class="page-title">
+                    <h1>Historique des Ventes</h1>
+                    <p>Consultez et gérez vos ventes</p>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-primary" onclick="window.location.href='/pos.html'">
+                        <i class="fas fa-plus"></i> Nouvelle Vente
+                    </button>
+                </div>
+            </header>
+
+            <div class="page-body">
+                <div class="sales-filters">
+                    <div class="filter-group">
+                        <label>Période:</label>
+                        <select class="form-control" id="periodFilter" onchange="Sales.load(this.value)">
+                            <option value="all">Toutes</option>
+                            <option value="today">Aujourd'hui</option>
+                            <option value="week">Cette semaine</option>
+                            <option value="month">Ce mois</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Du:</label>
+                        <input type="date" class="form-control" id="startDate">
+                    </div>
+                    <div class="filter-group">
+                        <label>Au:</label>
+                        <input type="date" class="form-control" id="endDate">
+                    </div>
+                    <button class="btn btn-secondary" onclick="filterByDate()">
+                        <i class="fas fa-filter"></i> Filtrer
+                    </button>
+                    <div style="flex:1;"></div>
+                    <div class="filter-group">
+                        <button class="btn btn-secondary" onclick="Sales.export('today')">
+                            <i class="fas fa-download"></i> Export Jour
+                        </button>
+                        <button class="btn btn-secondary" onclick="Sales.export('month')">
+                            <i class="fas fa-download"></i> Export Mois
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>N° Facture</th>
+                                        <th>Date</th>
+                                        <th>Client</th>
+                                        <th>Vendeur</th>
+                                        <th>Total</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="salesTableBody">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted">Chargement...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Sale Detail Modal -->
+    <div class="modal-overlay" id="saleDetailModal">
+        <div class="modal" style="max-width:620px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-receipt"></i> Détails de la vente</h3>
+                <button class="modal-close" onclick="Modal.hide('saleDetailModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="saleDetailContent"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="Modal.hide('saleDetailModal')">Fermer</button>
+                <button class="btn btn-primary" id="printSaleBtn">
+                    <i class="fas fa-file-pdf"></i> Télécharger PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        function filterByDate() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate   = document.getElementById('endDate').value;
+            if (startDate && endDate) Sales.load('custom');
+        }
+
+        // ============ OVERRIDE Sales.render — badge frais dans la liste ============
+        const _origSalesRender = Sales.render.bind(Sales);
+        Sales.render = function() {
+            const tbody = document.getElementById('salesTableBody');
+            if (!tbody) return;
+
+            if (this.list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Aucune vente</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = this.list.map(sale => {
+                // Badge frais si la vente en contient
+                const fraisItems = sale.frais || [];
+                const fraisBadge = fraisItems.length > 0
+                    ? `<span class="frais-badge"><i class="fas fa-receipt"></i> +frais</span>`
+                    : '';
+
+                return `
+                <tr>
+                    <td><strong>${sale.invoice_number}</strong></td>
+                    <td>${Utils.formatDateTime(sale.created_at)}</td>
+                    <td>${sale.client_name || '<span class="text-muted">Client comptoir</span>'}</td>
+                    <td>${sale.user_name}</td>
+                    <td class="text-right">
+                        <strong>${Utils.formatCurrency(sale.total)}</strong>
+                        ${fraisBadge}
+                    </td>
+                    <td><span class="badge badge-success"><i class="fas fa-check"></i> Payée</span></td>
+                    <td class="actions-cell">
+                        <button class="btn btn-sm btn-secondary" onclick="Sales.view(${sale.id})" title="Voir détails">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="Sales.printInvoice(${sale.id})" title="PDF">
+                            <i class="fas fa-file-pdf"></i>
+                        </button>
+                        ${Auth.isAdmin() ? `
+                        <button class="btn btn-sm btn-danger" onclick="Sales.delete(${sale.id})" title="Supprimer">
+                            <i class="fas fa-trash"></i>
+                        </button>` : ''}
+                    </td>
+                </tr>`;
+            }).join('');
+        };
+
+        // ============ OVERRIDE Sales.view — affiche les frais dans le modal détail ============
+        Sales.view = async function(id) {
+            try {
+                const sale = await API.get(`/api/sales/${id}`);
+                const fraisItems = sale.frais || [];
+                const fraisTotal = fraisItems.reduce((s, f) => s + f.amount, 0);
+
+                // Section frais HTML
+                const fraisSection = fraisItems.length > 0 ? `
+                    <div class="sale-frais-section">
+                        <div class="sale-frais-title">
+                            <i class="fas fa-receipt"></i> Frais supplémentaires
+                        </div>
+                        ${fraisItems.map(f => `
+                        <div class="sale-frais-row">
+                            <span class="frais-name"><i class="fas fa-tag" style="font-size:10px;margin-right:4px;opacity:0.6;"></i>${f.name}</span>
+                            <span class="sale-frais-note">hors CA</span>
+                            <span class="frais-amt">+ ${Utils.formatCurrency(f.amount)}</span>
+                        </div>`).join('')}
+                    </div>` : '';
+
+                const html = `
+                    <div class="sale-detail">
+                        <div class="sale-header" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+                            <div>
+                                <h4 style="margin:0;color:#4f46e5;font-size:18px;">${sale.invoice_number}</h4>
+                                <small class="text-muted">${Utils.formatDateTime(sale.created_at)}</small>
+                            </div>
+                            <span class="badge badge-success">Payée</span>
+                        </div>
+
+                        <div class="sale-info" style="margin-bottom:14px;display:flex;flex-direction:column;gap:4px;font-size:13px;">
+                            <p><i class="fas fa-user" style="width:14px;color:#64748b;"></i> <strong>Client:</strong> ${sale.client_name || 'Client comptoir'}</p>
+                            ${sale.client_phone ? `<p><i class="fas fa-phone" style="width:14px;color:#64748b;"></i> <strong>Tél:</strong> ${sale.client_phone}</p>` : ''}
+                            <p><i class="fas fa-user-tie" style="width:14px;color:#64748b;"></i> <strong>Vendeur:</strong> ${sale.user_name}</p>
+                            ${sale.payment_method ? `<p><i class="fas fa-credit-card" style="width:14px;color:#64748b;"></i> <strong>Paiement:</strong> ${_payLabel(sale.payment_method)}</p>` : ''}
+                            ${sale.remarque ? `<p><i class="fas fa-comment-alt" style="width:14px;color:#64748b;"></i> <strong>Note:</strong> <em>${sale.remarque}</em></p>` : ''}
+                        </div>
+
+                        <div class="sale-items">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Produit</th>
+                                        <th class="text-center">Qté</th>
+                                        <th class="text-right">P.U</th>
+                                        <th class="text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${sale.items.map(item => `
+                                    <tr>
+                                        <td>${item.product_name}</td>
+                                        <td class="text-center">${item.quantity}</td>
+                                        <td class="text-right">${Utils.formatCurrency(item.unit_price)}</td>
+                                        <td class="text-right"><strong>${Utils.formatCurrency(item.total)}</strong></td>
+                                    </tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        ${fraisSection}
+
+                        <div class="sale-totals" style="margin-top:14px;border-top:2px dashed #334155;padding-top:12px;">
+                            <div class="total-row" style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;">
+                                <span>Sous-total produits:</span>
+                                <span>${Utils.formatCurrency(sale.subtotal)}</span>
+                            </div>
+                            ${sale.discount_value > 0 ? `
+                            <div class="total-row discount" style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:#f87171;">
+                                <span>Remise:</span>
+                                <span>- ${Utils.formatCurrency(sale.discount_value)}</span>
+                            </div>` : ''}
+                            ${fraisItems.length > 0 ? `
+                            <div class="total-row" style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:#6ee7b7;">
+                                <span>Total frais:</span>
+                                <span>+ ${Utils.formatCurrency(fraisTotal)}</span>
+                            </div>` : ''}
+                            <div class="total-row grand-total" style="display:flex;justify-content:space-between;padding:10px 0;font-size:17px;font-weight:700;border-top:2px solid #334155;margin-top:6px;">
+                                <span>TOTAL CLIENT:</span>
+                                <span>${Utils.formatCurrency(sale.total)}</span>
+                            </div>
+                            ${fraisItems.length > 0 ? `
+                            <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#64748b;border-top:1px dotted #334155;margin-top:4px;">
+                                <span><i class="fas fa-info-circle"></i> CA orinasa (hors frais):</span>
+                                <span>${Utils.formatCurrency(sale.total - fraisTotal)}</span>
+                            </div>` : ''}
+                        </div>
+                    </div>`;
+
+                document.getElementById('saleDetailContent').innerHTML = html;
+                document.getElementById('printSaleBtn').onclick = () => Sales.printInvoice(sale.id);
+                Modal.show('saleDetailModal');
+            } catch (error) {
+                Toast.error('Erreur lors du chargement');
+            }
+        };
+
+        function _payLabel(method) {
+            const labels = { cash: 'Espèces', mvola: 'MVola', airtel_money: 'Airtel Money', orange_money: 'Orange Money' };
+            return labels[method] || method;
+        }
+    </script>
+</body>
+</html>

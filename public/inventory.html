@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <!-- Favicon TECHFLOW POS -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <title>Inventaire - TechFlow </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="sidebar-logo-icon">
+                        <i class="fas fa-cash-register"></i>
+                    </div>
+                    <div class="sidebar-logo-text">
+                        <h2> TechFlow </h2>
+                        <span>Point de Vente</span>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Principal</div>
+                    <a href="/index.html" class="nav-item admin-only">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/pos.html" class="nav-item">
+                        <i class="fas fa-cash-register"></i>
+                        <span>Point de Vente</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Gestion</div>
+                    <a href="/inventory.html" class="nav-item active">
+                        <i class="fas fa-boxes"></i>
+                        <span>Inventaire</span>
+                    </a>
+                    <a href="/sales.html" class="nav-item">
+                        <i class="fas fa-receipt"></i>
+                        <span>Ventes</span>
+                    </a>
+                    <a href="/clients.html" class="nav-item">
+                        <i class="fas fa-users"></i>
+                        <span>Clients</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section admin-only">
+                    <div class="nav-section-title">Administration</div>
+                    <a href="/profits.html" class="nav-item">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Profits</span>
+                    </a>
+                    <a href="/treasury.html" class="nav-item">
+                        <i class="fas fa-wallet"></i>
+                        <span>Trésorerie</span>
+                    </a>
+                    <a href="/users.html" class="nav-item">
+                        <i class="fas fa-user-cog"></i>
+                        <span>Utilisateurs</span>
+                    </a>
+                    <a href="/config.html" class="nav-item">
+                        <i class="fas fa-cog"></i>
+                        <span>Configuration</span>
+                    </a>
+                </div>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">AD</div>
+                    <div class="user-details">
+                        <h4>Admin</h4>
+                        <span>Administrateur</span>
+                    </div>
+                </div>
+                <button class="btn-logout" onclick="Auth.logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Déconnexion
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <div class="page-title">
+                    <h1>Inventaire</h1>
+                    <p>Gestion des produits et du stock</p>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-secondary" onclick="showMovementsModal()">
+                        <i class="fas fa-history"></i> Mouvements
+                    </button>
+                    <button class="btn btn-primary" onclick="Inventory.showAddModal()">
+                        <i class="fas fa-plus"></i> Nouveau Produit
+                    </button>
+                </div>
+            </header>
+            
+            <div class="page-body">
+                <!-- Admin Stats Cards -->
+                <div class="stats-grid admin-only" id="inventoryStats">
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h4>Valeur totale du stock</h4>
+                            <div class="stat-value" id="totalStockValue">0 Ar</div>
+                            <div class="stat-change">Prix de vente</div>
+                        </div>
+                        <div class="stat-icon blue">
+                            <i class="fas fa-warehouse"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h4>Coût total d'achat</h4>
+                            <div class="stat-value" id="totalPurchaseCost">0 Ar</div>
+                            <div class="stat-change">Prix d'achat</div>
+                        </div>
+                        <div class="stat-icon orange">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h4>Profit potentiel</h4>
+                            <div class="stat-value" id="totalPotentialProfit">0 Ar</div>
+                            <div class="stat-change positive">Si tout est vendu</div>
+                        </div>
+                        <div class="stat-icon green">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h4>Produits en stock</h4>
+                            <div class="stat-value" id="totalProducts">0</div>
+                            <div class="stat-change" id="lowStockCount">0 en rupture</div>
+                        </div>
+                        <div class="stat-icon purple">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Search & Filters -->
+                <div class="inventory-header">
+                    <div class="inventory-search">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="form-control" placeholder="Rechercher par nom ou code-barre..." 
+                               id="inventorySearchInput">
+                    </div>
+                    <div class="inventory-filters">
+                        <select class="form-control" id="stockFilter">
+                            <option value="all">Tous les stocks</option>
+                            <option value="in">En stock</option>
+                            <option value="low">Stock faible</option>
+                            <option value="out">Rupture</option>
+                        </select>
+                        <select class="form-control" id="categoryFilter">
+                            <option value="all">Toutes catégories</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Products Table -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table class="inventory-table">
+                                <thead>
+                                    <tr>
+                                        <th>Produit</th>
+                                        <th>Code-barre</th>
+                                        <th class="admin-only">Prix d'achat</th>
+                                        <th>Prix de vente</th>
+                                        <th>Quantité</th>
+                                        <th>Statut</th>
+                                        <th class="admin-only">Marge unitaire</th>
+                                        <th class="admin-only">Valeur stock</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventoryTableBody">
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted">Chargement...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Product Modal -->
+    <div class="modal-overlay" id="productModal">
+        <div class="modal" style="max-width:600px;">
+            <div class="modal-header">
+                <h3 id="productModalTitle">Nouveau Produit</h3>
+                <button class="modal-close" onclick="Modal.hide('productModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="productForm" enctype="multipart/form-data">
+                    <input type="hidden" id="productId" name="id">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productName">Nom du produit *</label>
+                            <input type="text" id="productName" name="name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productCategory">Catégorie</label>
+                            <input type="text" id="productCategory" name="category" class="form-control" list="categoryList">
+                            <datalist id="categoryList"></datalist>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group admin-only">
+                            <label for="productPurchasePrice">Prix d'achat (Ar)</label>
+                            <input type="number" id="productPurchasePrice" name="purchase_price" class="form-control" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="productSalePrice">Prix de vente (Ar) *</label>
+                            <input type="number" id="productSalePrice" name="sale_price" class="form-control" required min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productQuantity">Quantité</label>
+                            <input type="number" id="productQuantity" name="quantity" class="form-control" value="0" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="productMinStock">Stock minimum</label>
+                            <input type="number" id="productMinStock" name="min_stock" class="form-control" value="5" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productBarcode">Code-barre</label>
+                            <input type="text" id="productBarcode" name="barcode" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="productImage">Image</label>
+                            <input type="file" id="productImage" name="image" class="form-control" accept="image/*">
+                            <div id="imagePreview" class="mt-2"></div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="Modal.hide('productModal')">Annuler</button>
+                <button class="btn btn-primary" onclick="Inventory.save()">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Add Stock Modal -->
+    <div class="modal-overlay" id="quickAddModal">
+        <div class="modal" style="max-width:400px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-boxes"></i> Réapprovisionner</h3>
+                <button class="modal-close" onclick="Modal.hide('quickAddModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="quickAddProductId">
+                <div style="background:#f8fafc;padding:15px;border-radius:10px;margin-bottom:20px;">
+                    <p style="margin:0;">Produit: <strong id="quickAddProductName"></strong></p>
+                    <p style="margin:5px 0 0;color:#64748b;font-size:13px;">Stock actuel: <strong id="quickAddCurrentStock"></strong></p>
+                </div>
+                <div class="form-group">
+                    <label for="quickAddQuantity">Quantité à ajouter</label>
+                    <input type="number" id="quickAddQuantity" class="form-control" min="1" placeholder="Ex: 10">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="Modal.hide('quickAddModal')">Annuler</button>
+                <button class="btn btn-success" onclick="Inventory.saveQuickAdd()">
+                    <i class="fas fa-plus"></i> Ajouter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Movements Modal -->
+<div class="modal-overlay" id="movementsModal">
+    <div class="modal" style="max-width:950px;">
+        <div class="modal-header">
+            <h3><i class="fas fa-history"></i> Historique des mouvements de stock</h3>
+            <button class="modal-close" onclick="Modal.hide('movementsModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center;">
+                <select class="form-control" id="movementPeriodFilter" style="width:auto;" onchange="StockMovements.load(this.value)">
+                    <option value="all">Tous les mouvements</option>
+                    <option value="today">Aujourd'hui</option>
+                    <option value="week">Cette semaine</option>
+                    <option value="month">Ce mois</option>
+                </select>
+                <select class="form-control" id="movementTypeFilter" style="width:auto;" onchange="filterMovementsByType()">
+                    <option value="all">Tous les types</option>
+                    <option value="entry">Entrées seulement</option>
+                    <option value="exit">Sorties seulement</option>
+                </select>
+                <div style="flex:1;"></div>
+                <button class="btn btn-secondary" onclick="StockMovements.export('month')">
+                    <i class="fas fa-download"></i> Exporter CSV
+                </button>
+                <button class="btn btn-primary admin-only" onclick="StockMovements.showAddModal()">
+                    <i class="fas fa-plus"></i> Mouvement manuel
+                </button>
+            </div>
+            
+            <div class="table-container" style="max-height:450px;overflow-y:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date & Heure</th>
+                            <th>Produit</th>
+                            <th>Type</th>
+                            <th>Quantité</th>
+                            <th>Raison</th>
+                            <th>Utilisateur</th>
+                            <th class="admin-only" style="width:80px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="movementsTableBody">
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Chargement...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Info pour les non-admins -->
+            <div class="caissier-only" style="margin-top:20px;padding:15px;background:rgba(37,99,235,0.1);border-radius:4px;border:1px solid rgba(37,99,235,0.2);">
+                <p style="margin:0;color:#9ca3af;font-size:13px;">
+                    <i class="fas fa-info-circle" style="color:#2563eb;"></i>
+                    <strong>Note:</strong> Seuls les administrateurs peuvent modifier ou supprimer les mouvements de stock.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Manual Movement Modal (Admin only) -->
+<div class="modal-overlay" id="addMovementModal">
+    <div class="modal" style="max-width:500px;">
+        <div class="modal-header">
+            <h3><i class="fas fa-exchange-alt"></i> Mouvement manuel</h3>
+            <button class="modal-close" onclick="Modal.hide('addMovementModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="movementForm">
+                <div class="form-group">
+                    <label for="movementProductId">Produit *</label>
+                    <select id="movementProductId" class="form-control" required>
+                        <option value="">-- Sélectionner un produit --</option>
+                    </select>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="movementType">Type *</label>
+                        <select id="movementType" class="form-control" required>
+                            <option value="entry">Entrée (+)</option>
+                            <option value="exit">Sortie (-)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="movementQuantity">Quantité *</label>
+                        <input type="number" id="movementQuantity" class="form-control" min="1" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="movementReason">Raison</label>
+                    <input type="text" id="movementReason" class="form-control" placeholder="Ex: Inventaire, Perte, Retour...">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="Modal.hide('addMovementModal')">Annuler</button>
+            <button class="btn btn-primary" onclick="StockMovements.saveManual()">
+                <i class="fas fa-save"></i> Enregistrer
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Filter movements by type
+    function filterMovementsByType() {
+        const typeFilter = document.getElementById('movementTypeFilter').value;
+        const rows = document.querySelectorAll('#movementsTableBody tr');
+        
+        rows.forEach(row => {
+            const badge = row.querySelector('.badge-success, .badge-danger');
+            if (!badge) return;
+            
+            const isEntry = badge.classList.contains('badge-success');
+            
+            if (typeFilter === 'all') {
+                row.style.display = '';
+            } else if (typeFilter === 'entry' && isEntry) {
+                row.style.display = '';
+            } else if (typeFilter === 'exit' && !isEntry) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+    
+    // Load products for manual movement modal
+    async function loadProductsForMovement() {
+        try {
+            const products = await API.get('/api/products');
+            const select = document.getElementById('movementProductId');
+            if (select) {
+                select.innerHTML = '<option value="">-- Sélectionner un produit --</option>' +
+                    products.map(p => `<option value="${p.id}">${p.name} (Stock: ${p.quantity})</option>`).join('');
+            }
+        } catch (e) {
+            console.error('Error loading products:', e);
+        }
+    }
+    
+    // Show movements modal
+    function showMovementsModal() {
+        StockMovements.load('all');
+        if (Auth.isAdmin()) {
+            loadProductsForMovement();
+        }
+        Modal.show('movementsModal');
+    }
+    
+    // Hide admin-only elements for non-admins
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            if (!Auth.isAdmin()) {
+                document.querySelectorAll('.admin-only').forEach(el => {
+                    el.style.display = 'none';
+                });
+                document.querySelectorAll('.caissier-only').forEach(el => {
+                    el.style.display = 'block';
+                });
+            } else {
+                document.querySelectorAll('.caissier-only').forEach(el => {
+                    el.style.display = 'none';
+                });
+            }
+        }, 500);
+    });
+</script>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // Calculate and display inventory stats (admin only)
+        async function calculateInventoryStats() {
+            if (!Auth.isAdmin()) return;
+            
+            try {
+                const products = await API.get('/api/products');
+                
+                let totalStockValue = 0;
+                let totalPurchaseCost = 0;
+                let totalProducts = products.length;
+                let lowStockCount = 0;
+                let outOfStockCount = 0;
+                
+                products.forEach(p => {
+                    if (p.product_type === 'service') return; // services excluded from stock stats
+                    totalStockValue += (p.sale_price || 0) * (p.quantity || 0);
+                    totalPurchaseCost += (p.purchase_price || 0) * (p.quantity || 0);
+
+                    if (p.quantity <= 0) {
+                        outOfStockCount++;
+                    } else if (p.quantity <= p.min_stock) {
+                        lowStockCount++;
+                    }
+                });
+                
+                const potentialProfit = totalStockValue - totalPurchaseCost;
+                
+                document.getElementById('totalStockValue').textContent = Utils.formatCurrency(totalStockValue);
+                document.getElementById('totalPurchaseCost').textContent = Utils.formatCurrency(totalPurchaseCost);
+                document.getElementById('totalPotentialProfit').textContent = Utils.formatCurrency(potentialProfit);
+                document.getElementById('totalProducts').textContent = totalProducts;
+                document.getElementById('lowStockCount').textContent = `${outOfStockCount} en rupture, ${lowStockCount} faible`;
+                
+            } catch (error) {
+                console.error('Error calculating stats:', error);
+            }
+        }
+        
+        // Override Inventory render to include margin column
+        const originalInventoryRender = Inventory.render;
+        Inventory.render = function() {
+            const tbody = document.getElementById('inventoryTableBody');
+            if (!tbody) return;
+            
+            const isAdmin = Auth.isAdmin();
+            
+            tbody.innerHTML = this.products.map(product => {
+                const isSvc = product.product_type === 'service';
+                let stockClass = 'in-stock';
+                let stockText = 'En stock';
+
+                if (isSvc) {
+                    stockClass = 'service-badge';
+                    stockText = 'Service';
+                } else if (product.quantity <= 0) {
+                    stockClass = 'out-of-stock';
+                    stockText = 'Rupture';
+                } else if (product.quantity <= product.min_stock) {
+                    stockClass = 'low-stock';
+                    stockText = 'Stock faible';
+                }
+
+                const margin = (product.sale_price || 0) - (product.purchase_price || 0);
+                const stockValue = (product.sale_price || 0) * (product.quantity || 0);
+                const qtyDisplay = isSvc ? '<span style="color:#a78bfa;font-size:11px;">—</span>' : `<strong>${product.quantity}</strong>`;
+                const rowStyle = isSvc ? 'border-left:2px solid rgba(168,85,247,0.4);' : '';
+                const imgIcon = isSvc
+                    ? '<div style="width:40px;height:40px;background:rgba(124,58,237,0.15);border-radius:6px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-concierge-bell" style="color:#a78bfa;"></i></div>'
+                    : '<div style="width:40px;height:40px;background:rgba(255,255,255,0.05);border-radius:6px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-box" style="color:#6b7280;"></i></div>';
+
+                return `
+                    <tr style="${rowStyle}">
+                        <td>
+                            <div class="product-cell">
+                                ${product.image
+                                    ? `<img src="${product.image}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">`
+                                    : imgIcon}
+                                <div>
+                                    <strong>${product.name}</strong>
+                                    <br><small class="text-muted">${product.category || 'Sans catégorie'}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${product.barcode || '-'}</td>
+                        ${isAdmin ? `<td>${isSvc ? '<span style="color:#6b7280;">—</span>' : Utils.formatCurrency(product.purchase_price || 0)}</td>` : ''}
+                        <td>${Utils.formatCurrency(product.sale_price)}</td>
+                        <td>${qtyDisplay}</td>
+                        <td><span class="stock-badge ${stockClass}" style="${isSvc ? 'background:rgba(168,85,247,0.15);color:#a78bfa;border:1px solid rgba(168,85,247,0.3);' : ''}">${stockText}</span></td>
+                        ${isAdmin ? `<td class="text-success"><strong>${isSvc ? '<span style="color:#6b7280;">—</span>' : Utils.formatCurrency(margin)}</strong></td>` : ''}
+                        ${isAdmin ? `<td>${Utils.formatCurrency(stockValue)}</td>` : ''}
+                        <td>
+                            <button class="btn btn-sm btn-secondary" onclick="Inventory.quickAddStock(${product.id}, '${product.name.replace(/'/g, "\\'")}', ${product.quantity})" title="Réapprovisionner">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="btn btn-sm btn-primary" onclick="Inventory.edit(${product.id})" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            ${isAdmin ? `
+                            <button class="btn btn-sm btn-danger" onclick="Inventory.delete(${product.id})" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // Calculate stats after render
+            calculateInventoryStats();
+            // Re-apply filters after render to keep search/filter state
+            filterInventory();
+        };
+        
+        // Update quickAddStock to show current stock
+        Inventory.quickAddStock = function(id, name, currentStock) {
+            document.getElementById('quickAddProductId').value = id;
+            document.getElementById('quickAddProductName').textContent = name;
+            document.getElementById('quickAddCurrentStock').textContent = currentStock + ' unités';
+            document.getElementById('quickAddQuantity').value = '';
+            Modal.show('quickAddModal');
+        };
+        
+        function showMovementsModal() {
+            StockMovements.load('all');
+            Modal.show('movementsModal');
+        }
+        
+        // Filter handlers
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Load categories
+            try {
+                const categories = await API.get('/api/categories');
+                const select = document.getElementById('categoryFilter');
+                const datalist = document.getElementById('categoryList');
+                
+                categories.forEach(c => {
+                    const option = document.createElement('option');
+                    option.value = c;
+                    option.textContent = c;
+                    select.appendChild(option);
+                });
+                
+                if (datalist) {
+                    datalist.innerHTML = categories.map(c => `<option value="${c}">`).join('');
+                }
+            } catch(e) {}
+            
+            // Search filter
+            document.getElementById('inventorySearchInput').addEventListener('input', Utils.debounce((e) => {
+                filterInventory();
+            }, 300));
+            
+            // Stock filter
+            document.getElementById('stockFilter').addEventListener('change', filterInventory);
+            
+            // Category filter
+            document.getElementById('categoryFilter').addEventListener('change', filterInventory);
+            
+            // Movement filters
+            document.getElementById('movementPeriodFilter')?.addEventListener('change', (e) => {
+                StockMovements.load(e.target.value);
+            });
+            
+            document.getElementById('movementTypeFilter')?.addEventListener('change', filterMovements);
+        });
+        
+        function filterInventory() {
+            const searchQuery = document.getElementById('inventorySearchInput').value.toLowerCase();
+            const stockFilter = document.getElementById('stockFilter').value;
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            
+            const rows = document.querySelectorAll('#inventoryTableBody tr');
+            
+            rows.forEach(row => {
+                const productName = row.querySelector('.product-cell strong')?.textContent.toLowerCase() || '';
+                const category = row.querySelector('.product-cell small')?.textContent.toLowerCase() || '';
+                const barcode = row.cells[1]?.textContent || '';
+                const stockBadge = row.querySelector('.stock-badge');
+                
+                let show = true;
+                
+                // Search filter
+                if (searchQuery && !productName.includes(searchQuery) && !barcode.includes(searchQuery)) {
+                    show = false;
+                }
+                
+                // Stock filter
+                if (stockFilter !== 'all' && stockBadge) {
+                    if (stockFilter === 'in' && !stockBadge.classList.contains('in-stock')) show = false;
+                    if (stockFilter === 'low' && !stockBadge.classList.contains('low-stock')) show = false;
+                    if (stockFilter === 'out' && !stockBadge.classList.contains('out-of-stock')) show = false;
+                }
+                
+                // Category filter
+                if (categoryFilter !== 'all' && !category.includes(categoryFilter.toLowerCase())) {
+                    show = false;
+                }
+                
+                row.style.display = show ? '' : 'none';
+            });
+        }
+        
+        function filterMovements() {
+            const typeFilter = document.getElementById('movementTypeFilter').value;
+            const rows = document.querySelectorAll('#movementsTableBody tr');
+            
+            rows.forEach(row => {
+                const badge = row.querySelector('.badge');
+                if (!badge) return;
+                
+                if (typeFilter === 'all') {
+                    row.style.display = '';
+                } else if (typeFilter === 'entry' && badge.classList.contains('badge-success')) {
+                    row.style.display = '';
+                } else if (typeFilter === 'exit' && badge.classList.contains('badge-danger')) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
