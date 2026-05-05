@@ -1,13 +1,5 @@
+/* ============ GOOGLE FONTS ============ */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
-
-/* ============ ZOOM FIX ============ */
-html {
-    font-size: 14px;
-    -webkit-text-size-adjust: 100%;
-}
-@media (max-width: 1440px) { html { font-size: 13px; } }
-@media (max-width: 1280px) { html { font-size: 12.5px; } }
-@media (max-width: 1100px) { html { font-size: 12px; } }
 
 /* ============ CSS VARIABLES ============ */
 :root {
@@ -46,7 +38,7 @@ html {
     --info: #06b6d4;
     
     /* Layout */
-    --sidebar-width: 240px;
+    --sidebar-width: 260px;
     --topbar-height: 70px;
     --border-radius: 4px;
     --border-radius-lg: 8px;
@@ -76,7 +68,7 @@ html {
 
 body {
     font-family: 'Rajdhani', sans-serif;
-    font-size: 1rem;
+    font-size: 15px;
     font-weight: 400;
     line-height: 1.6;
     color: var(--text-secondary);
@@ -91,16 +83,16 @@ h1, h2, h3, h4, h5, h6 {
     font-family: 'Orbitron', sans-serif;
     font-weight: 600;
     color: var(--text-primary);
-    letter-spacing: 0px;
+    letter-spacing: 1px;
     line-height: 1.3;
 }
 
-h1 { font-size: 1.4rem; }
-h2 { font-size: 1.2rem; }
-h3 { font-size: 1rem; }
-h4 { font-size: 0.9rem; }
-h5 { font-size: 0.85rem; }
-h6 { font-size: 0.8rem; }
+h1 { font-size: 28px; }
+h2 { font-size: 24px; }
+h3 { font-size: 20px; }
+h4 { font-size: 18px; }
+h5 { font-size: 16px; }
+h6 { font-size: 14px; }
 
 a {
     color: var(--accent-light);
@@ -405,7 +397,7 @@ a:hover {
 }
 
 .sidebar-header {
-    padding: 16px 16px;
+    padding: 25px 20px;
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -604,7 +596,7 @@ a:hover {
 }
 
 .page-body {
-    padding: 16px 20px;
+    padding: 30px;
 }
 
 /* ============ BUTTONS ============ */
@@ -2351,110 +2343,4 @@ textarea.form-control {
 /* ============ CAISSIER ONLY INFO ============ */
 .caissier-only {
     display: none;
-}
-
-/* ════════════════════════════════════════════════════
-   FUTURISTIC DESIGN — Logo, Background, Polish
-   ════════════════════════════════════════════════════ */
-
-/* ── Animated background grid ── */
-body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    background-image:
-        linear-gradient(rgba(37,99,235,0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(37,99,235,0.04) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-}
-
-/* ── Sidebar futuristic border glow ── */
-.sidebar {
-    border-right: 1px solid rgba(37,99,235,0.25) !important;
-    background: linear-gradient(180deg, #0a0a0f 0%, #080810 100%) !important;
-}
-.sidebar::after {
-    content: '';
-    position: absolute;
-    top: 0; right: -1px; bottom: 0;
-    width: 1px;
-    background: linear-gradient(180deg, transparent, rgba(37,99,235,0.6), transparent);
-    pointer-events: none;
-}
-
-/* ── Logo futuriste ── */
-.sidebar-logo-icon {
-    background: transparent !important;
-    box-shadow: none !important;
-    position: relative;
-    border: 1px solid rgba(37,99,235,0.5);
-}
-.sidebar-logo-icon::before {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    background: linear-gradient(135deg, rgba(37,99,235,0.3), rgba(99,102,241,0.1));
-    z-index: -1;
-}
-.sidebar-logo-icon i {
-    background: linear-gradient(135deg, #60a5fa, #a78bfa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-/* ── Sidebar logo text ── */
-.sidebar-logo-text h2 {
-    background: linear-gradient(90deg, #fff 0%, #93c5fd 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-.sidebar-logo-text span {
-    color: rgba(37,99,235,0.7) !important;
-    letter-spacing: 1.5px !important;
-    font-size: 0.65rem !important;
-    text-transform: uppercase;
-}
-
-/* ── Active nav item — futuristic ── */
-.nav-item.active {
-    background: linear-gradient(90deg, rgba(37,99,235,0.15), transparent) !important;
-    border-left: 2px solid var(--accent);
-    padding-left: 12px;
-}
-
-/* ── Card subtle glow on hover ── */
-.card:hover {
-    border-color: rgba(37,99,235,0.35) !important;
-    box-shadow: 0 0 20px rgba(37,99,235,0.06) !important;
-}
-
-/* ── Stat cards ── */
-.stat-card:hover {
-    border-color: rgba(37,99,235,0.4) !important;
-    box-shadow: 0 0 24px rgba(37,99,235,0.1) !important;
-}
-
-/* ── Buttons glow ── */
-.btn-primary {
-    box-shadow: 0 0 16px rgba(37,99,235,0.25);
-}
-.btn-primary:hover {
-    box-shadow: 0 0 28px rgba(37,99,235,0.45) !important;
-}
-
-/* ── Input focus glow ── */
-.form-control:focus {
-    box-shadow: 0 0 0 2px rgba(37,99,235,0.2), 0 0 12px rgba(37,99,235,0.1) !important;
-}
-
-/* ── Topbar glass effect ── */
-.topbar {
-    backdrop-filter: blur(12px) !important;
-    background: rgba(10,10,15,0.85) !important;
-    border-bottom: 1px solid rgba(37,99,235,0.15) !important;
 }

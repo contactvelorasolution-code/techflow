@@ -418,96 +418,105 @@
                     
                     <!-- Cart -->
                     <div class="pos-cart">
-                        <!-- Cart header -->
                         <div class="pos-cart-header">
-                            <h3><i class="fas fa-shopping-cart"></i> Commande <span class="badge badge-info" id="cartCount" style="display:none;">0</span></h3>
-                            <button class="btn btn-sm btn-secondary" onclick="Cart.clear()" title="Vider le panier">
-                                <i class="fas fa-trash"></i>
+                            <h3><i class="fas fa-shopping-cart"></i> Panier <span class="badge badge-info" id="cartCount">0</span></h3>
+                            <button class="btn btn-sm btn-secondary" onclick="Cart.clear()">
+                                <i class="fas fa-trash"></i> Vider
                             </button>
                         </div>
-
-                        <!-- Items list -->
+                        
                         <div class="pos-cart-items" id="cartItems">
                             <div class="pos-cart-empty">
                                 <i class="fas fa-shopping-cart"></i>
                                 <p>Panier vide</p>
-                                <small>Cliquez sur un article pour l'ajouter</small>
                             </div>
                         </div>
 
-                        <!-- Summary -->
                         <div class="pos-cart-summary" id="cartSummary">
-                            <!-- Discount row -->
-                            <div class="pos-discount-input" style="display:flex;gap:6px;margin-bottom:10px;">
-                                <select id="discountType" style="width:64px;padding:6px 8px;background:var(--bg-input);border:1px solid var(--border-color);border-radius:4px;color:var(--text-primary);font-family:inherit;font-size:12px;">
+                            <div class="pos-discount-input">
+                                <select id="discountType">
                                     <option value="percent">%</option>
                                     <option value="fixed">Ar</option>
                                 </select>
-                                <input type="number" id="discountValue" placeholder="Remise" min="0"
-                                    style="flex:1;padding:6px 10px;background:var(--bg-input);border:1px solid var(--border-color);border-radius:4px;color:var(--text-primary);font-family:inherit;font-size:12px;">
+                                <input type="number" id="discountValue" placeholder="Remise" min="0">
+                            </div>
+                            
+                            <div class="pos-cart-row">
+                                <span>Sous-total:</span>
+                                <span id="cartSubtotal">0 Ar</span>
+                            </div>
+                            <div class="pos-cart-row">
+                                <span>Remise:</span>
+                                <span id="cartDiscount">- 0 Ar</span>
                             </div>
 
-                            <!-- Totals -->
-                            <div style="background:var(--bg-input);border-radius:6px;padding:10px 12px;margin-bottom:10px;">
-                                <div class="pos-cart-row" style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);padding:2px 0;">
-                                    <span>Sous-total</span><span id="cartSubtotal">0 Ar</span>
-                                </div>
-                                <div class="pos-cart-row" style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);padding:2px 0;">
-                                    <span>Remise</span><span id="cartDiscount" style="color:var(--danger);">− 0 Ar</span>
-                                </div>
-                                <div style="height:1px;background:var(--border-color);margin:6px 0;"></div>
-                                <div class="pos-cart-row total" style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;padding:2px 0;">
-                                    <span>TOTAL</span>
-                                    <span id="cartTotal" style="color:var(--accent);">0 Ar</span>
-                                </div>
-                            </div>
-
-                            <!-- Payment methods -->
-                            <div style="margin-bottom:10px;">
-                                <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px;font-weight:600;">Paiement</div>
-                                <div class="payment-methods" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
-                                    <div class="payment-method-option">
-                                        <input type="radio" name="paymentMethod" value="cash" id="cash" checked>
-                                        <label for="cash"><i class="fas fa-money-bill-wave"></i><span>Cash</span></label>
-                                    </div>
-                                    <div class="payment-method-option">
-                                        <input type="radio" name="paymentMethod" value="mvola" id="mvola">
-                                        <label for="mvola"><i class="fas fa-mobile-alt"></i><span>Mvola</span></label>
-                                    </div>
-                                    <div class="payment-method-option">
-                                        <input type="radio" name="paymentMethod" value="airtel_money" id="airtel">
-                                        <label for="airtel"><i class="fas fa-mobile-alt"></i><span>Airtel</span></label>
-                                    </div>
-                                    <div class="payment-method-option">
-                                        <input type="radio" name="paymentMethod" value="orange_money" id="orange">
-                                        <label for="orange"><i class="fas fa-mobile-alt"></i><span>Orange</span></label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Client -->
-                            <div style="margin-bottom:10px;">
-                                <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px;font-weight:600;">Client (optionnel)</div>
-                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-                                    <input type="text" id="clientName" class="form-control" placeholder="Nom" style="padding:6px 10px;font-size:12px;">
-                                    <input type="text" id="clientPhone" class="form-control" placeholder="Téléphone" style="padding:6px 10px;font-size:12px;">
-                                </div>
-                            </div>
-
-                            <!-- Note -->
-                            <div style="margin-bottom:10px;">
-                                <textarea id="saleRemarque" rows="1" class="form-control"
-                                    placeholder="Note interne..." style="font-size:12px;padding:6px 10px;resize:none;"></textarea>
+                            <div class="pos-cart-row total">
+                                <span>TOTAL:</span>
+                                <span id="cartTotal">0 Ar</span>
                             </div>
                         </div>
 
-                        <!-- Checkout button -->
+                        <!-- Mode de paiement -->
+                        <div class="pos-cart-section">
+                            <h4><i class="fas fa-credit-card"></i> Mode de paiement</h4>
+                            <div class="payment-methods">
+                                <div class="payment-method-option">
+                                    <input type="radio" name="paymentMethod" value="cash" id="cash" checked>
+                                    <label for="cash">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                        <span>Espèces (Cash)</span>
+                                    </label>
+                                </div>
+                                <div class="payment-method-option">
+                                    <input type="radio" name="paymentMethod" value="mvola" id="mvola">
+                                    <label for="mvola">
+                                        <i class="fas fa-mobile-alt"></i>
+                                        <span>Mvola</span>
+                                    </label>
+                                </div>
+                                <div class="payment-method-option">
+                                    <input type="radio" name="paymentMethod" value="airtel_money" id="airtel">
+                                    <label for="airtel">
+                                        <i class="fas fa-mobile-alt"></i>
+                                        <span>Airtel Money</span>
+                                    </label>
+                                </div>
+                                <div class="payment-method-option">
+                                    <input type="radio" name="paymentMethod" value="orange_money" id="orange">
+                                    <label for="orange">
+                                        <i class="fas fa-mobile-alt"></i>
+                                        <span>Orange Money</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Remarque interne -->
+                        <div class="pos-cart-section">
+                            <h4>
+                                <i class="fas fa-comment-alt"></i>
+                                Remarque
+                            </h4>
+                            <textarea id="saleRemarque" rows="2"
+                                      placeholder="Note interne (non visible sur la facture)..."></textarea>
+                        </div>
+                        
+                        <!-- Client -->
+                        <div class="pos-cart-section">
+                            <h4><i class="fas fa-user"></i> Client (optionnel)</h4>
+                            <div class="form-row">
+                                <input type="text" id="clientName" class="form-control" placeholder="Nom du client">
+                                <input type="text" id="clientPhone" class="form-control" placeholder="Téléphone">
+                            </div>
+                        </div>
+                        
+                        <!-- ★ FLOATING CHECKOUT BUTTON -->
                         <div class="pos-cart-actions"></div>
                         <button id="checkoutFloating" onclick="POSCheckout()">
-                            <span class="co-icon"><i class="fas fa-file-invoice"></i></span>
+                            <span class="co-icon"><i class="fas fa-file-pdf"></i></span>
                             <span class="co-label">
-                                <small>Valider &amp; PDF</small>
-                                <strong>Encaisser</strong>
+                                <small>Encaisser &amp; générer</small>
+                                <strong>Télécharger PDF</strong>
                             </span>
                             <span class="co-total" id="checkoutTotal">0 Ar</span>
                         </button>
@@ -780,55 +789,41 @@
         Products.render = function() {
             const grid = document.getElementById('productsGrid');
             if (!grid) return;
-
             const filtered = this.filter();
-
-            if (filtered.length === 0) {
+            if (!filtered.length) {
                 grid.innerHTML = `<div class="text-center text-muted" style="grid-column:1/-1;padding:40px;"><i class="fas fa-search fa-2x"></i><p class="mt-2">Aucun article trouvé</p></div>`;
                 return;
             }
-
             grid.innerHTML = filtered.map(product => {
-                const isSvc    = product.product_type === 'service';
-                const isOut    = !isSvc && product.quantity <= 0;
-                const isLow    = !isSvc && product.quantity > 0 && product.quantity <= (product.min_stock || 5);
-                const disabled = isOut;
-
-                let stockClass = '', stockText = '';
-                if (isSvc)       { stockClass = '';    stockText = 'Service'; }
-                else if (isOut)  { stockClass = 'out'; stockText = 'Rupture'; }
-                else if (isLow)  { stockClass = 'low'; stockText = `Stock faible: ${product.quantity}`; }
-                else             { stockText = `Stock: ${product.quantity}`; }
-
-                const pJson     = JSON.stringify(product).replace(/"/g, '&quot;');
-                const cardStyle = isSvc ? 'border-color:rgba(168,85,247,0.35);' : '';
-                const imgIcon   = isSvc ? 'fa-concierge-bell' : 'fa-box';
-                const imgColor  = isSvc ? '#a78bfa' : '#cbd5e1';
-                const svcTag    = isSvc ? '<div style="position:absolute;top:6px;right:6px;background:rgba(124,58,237,0.9);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;">SERVICE</div>' : '';
-                const btnStyle  = isSvc ? 'background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;' : '';
-
+                const isSvc = product.product_type === 'service';
+                const isOut = !isSvc && product.quantity <= 0;
+                const isLow = !isSvc && product.quantity > 0 && product.quantity <= (product.min_stock||5);
+                let stockClass='', stockText='';
+                if (isSvc)       { stockClass=''; stockText='Service'; }
+                else if (isOut)  { stockClass='out'; stockText='Rupture'; }
+                else if (isLow)  { stockClass='low'; stockText=`Stock faible: ${product.quantity}`; }
+                else             { stockText=`Stock: ${product.quantity}`; }
+                const pJson    = JSON.stringify(product).replace(/"/g,'&quot;');
+                const cardStyle= isSvc ? 'border-color:rgba(139,92,246,.35);' : '';
+                const svcTag   = isSvc ? '<div style="position:absolute;top:6px;right:6px;background:rgba(139,92,246,.9);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;">SERVICE</div>' : '';
+                const icon     = isSvc ? 'fa-concierge-bell' : 'fa-box';
+                const btnStyle = isSvc ? 'background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;' : '';
                 return `
-                    <div class="pos-product-card ${!isSvc && isOut ? 'out-of-stock' : ''}" style="${cardStyle}position:relative;">
-                        <div class="pos-product-image" onclick="${disabled ? '' : 'Cart.add(' + pJson + ')'}" style="cursor:${disabled ? 'default' : 'pointer'}">
-                            ${product.image
-                                ? `<img src="${product.image}" alt="${product.name}" style="height:120px;object-fit:cover;width:100%;border-radius:4px;">`
-                                : `<div style="height:120px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.03);border-radius:4px;"><i class="fas ${imgIcon} fa-3x" style="color:${imgColor};"></i></div>`}
+                    <div class="pos-product-card ${!isSvc&&isOut?'out-of-stock':''}" style="${cardStyle}position:relative;">
+                        <div class="pos-product-image" onclick="${isOut?'':('Cart.add('+pJson+')')}" style="cursor:${isOut?'default':'pointer'}">
+                            ${product.image?`<img src="${product.image}" alt="${product.name}" style="height:120px;object-fit:cover;width:100%;border-radius:4px;">`:
+                            `<div style="height:120px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.03);border-radius:4px;"><i class="fas ${icon} fa-3x" style="${isSvc?'color:#8b5cf6;':'color:#374151;'}"></i></div>`}
                             ${svcTag}
                         </div>
-                        <div class="pos-product-name" title="${product.name}" onclick="${disabled ? '' : 'Cart.add(' + pJson + ')'}" style="cursor:${disabled ? 'default' : 'pointer'}">
-                            ${product.name}
-                        </div>
-                        <div class="pos-product-price" onclick="${disabled ? '' : 'Cart.add(' + pJson + ')'}" style="cursor:${disabled ? 'default' : 'pointer'}${isSvc ? ';color:#a78bfa;' : ''}">
-                            ${Utils.formatCurrency(product.sale_price)}
-                        </div>
+                        <div class="pos-product-name" title="${product.name}" onclick="${isOut?'':('Cart.add('+pJson+')')}" style="cursor:${isOut?'default':'pointer'}">${product.name}</div>
+                        <div class="pos-product-price" onclick="${isOut?'':('Cart.add('+pJson+')')}" style="cursor:${isOut?'default':'pointer'}${isSvc?';color:#8b5cf6;':''}">${Utils.formatCurrency(product.sale_price)}</div>
                         <div class="pos-product-stock ${stockClass}">${stockText}</div>
                         <div class="pos-product-actions">
-                            <button class="btn btn-sm btn-primary" style="${btnStyle}" onclick="Cart.add(${pJson})" ${disabled ? 'disabled' : ''}>
+                            <button class="btn btn-sm btn-primary" style="${btnStyle}" onclick="Cart.add(${pJson})" ${isOut?'disabled':''}>
                                 <i class="fas fa-cart-plus"></i> Ajouter
                             </button>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }).join('');
         };
         
@@ -881,22 +876,22 @@
             }
         });
 
-        // Checkout simple (sans frais)
+        // Checkout simple
         async function POSCheckout() {
             if (Cart.items.length === 0) { Toast.error('Le panier est vide'); return; }
             await Sales.checkout();
         }
 
-                // Sales.checkout — sans frais supplémentaires
+                // Sales.checkout sans frais
         const _origCheckout = Sales.checkout.bind(Sales);
         Sales.checkout = async function() {
             if (Cart.items.length === 0) {
                 Toast.error('Le panier est vide');
                 return;
             }
-            const clientName    = document.getElementById('clientName')?.value  || '';
-            const clientPhone   = document.getElementById('clientPhone')?.value || '';
-            const remarque      = document.getElementById('saleRemarque')?.value || '';
+            const clientName  = document.getElementById('clientName')?.value  || '';
+            const clientPhone = document.getElementById('clientPhone')?.value || '';
+            const remarque    = document.getElementById('saleRemarque')?.value || '';
             const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
 
             if (!paymentMethod) {
@@ -919,16 +914,24 @@
             try {
                 const result = await API.post('/api/sales', saleData);
                 Toast.success('Vente enregistrée !');
+
                 const sale   = await API.get('/api/sales/' + result.id);
                 const config = await API.get('/api/config');
+
+                // Injecter les frais dans l'objet sale pour le PDF
+                if (!sale.frais) sale.frais = fraisItems;
+
                 await InvoicePDF.generate(sale, config, true);
+
+                // Reset
                 Cart.clear();
-                document.getElementById('clientName').value    = '';
-                document.getElementById('clientPhone').value   = '';
+                document.getElementById('clientName').value  = '';
+                document.getElementById('clientPhone').value = '';
                 document.getElementById('discountValue').value = '';
                 if (document.getElementById('saleRemarque'))
                     document.getElementById('saleRemarque').value = '';
                 Products.load();
+
             } catch (error) {
                 Toast.error(error.message);
             }

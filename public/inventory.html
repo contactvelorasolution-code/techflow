@@ -493,15 +493,11 @@
                 let outOfStockCount = 0;
                 
                 products.forEach(p => {
-                    if (p.product_type === 'service') return; // services excluded from stock stats
+                    if (p.product_type === 'service') return;
                     totalStockValue += (p.sale_price || 0) * (p.quantity || 0);
                     totalPurchaseCost += (p.purchase_price || 0) * (p.quantity || 0);
-
-                    if (p.quantity <= 0) {
-                        outOfStockCount++;
-                    } else if (p.quantity <= p.min_stock) {
-                        lowStockCount++;
-                    }
+                    if (p.quantity <= 0) { outOfStockCount++; }
+                    else if (p.quantity <= p.min_stock) { lowStockCount++; }
                 });
                 
                 const potentialProfit = totalStockValue - totalPurchaseCost;
@@ -528,34 +524,25 @@
             tbody.innerHTML = this.products.map(product => {
                 const isSvc = product.product_type === 'service';
                 let stockClass = 'in-stock';
-                let stockText = 'En stock';
-
+                let stockText  = 'En stock';
                 if (isSvc) {
-                    stockClass = 'service-badge';
-                    stockText = 'Service';
+                    stockClass = ''; stockText = 'Service';
                 } else if (product.quantity <= 0) {
-                    stockClass = 'out-of-stock';
-                    stockText = 'Rupture';
+                    stockClass = 'out-of-stock'; stockText = 'Rupture';
                 } else if (product.quantity <= product.min_stock) {
-                    stockClass = 'low-stock';
-                    stockText = 'Stock faible';
+                    stockClass = 'low-stock'; stockText = 'Stock faible';
                 }
-
+                
                 const margin = (product.sale_price || 0) - (product.purchase_price || 0);
                 const stockValue = (product.sale_price || 0) * (product.quantity || 0);
-                const qtyDisplay = isSvc ? '<span style="color:#a78bfa;font-size:11px;">—</span>' : `<strong>${product.quantity}</strong>`;
-                const rowStyle = isSvc ? 'border-left:2px solid rgba(168,85,247,0.4);' : '';
-                const imgIcon = isSvc
-                    ? '<div style="width:40px;height:40px;background:rgba(124,58,237,0.15);border-radius:6px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-concierge-bell" style="color:#a78bfa;"></i></div>'
-                    : '<div style="width:40px;height:40px;background:rgba(255,255,255,0.05);border-radius:6px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-box" style="color:#6b7280;"></i></div>';
-
+                
                 return `
-                    <tr style="${rowStyle}">
+                    <tr>
                         <td>
                             <div class="product-cell">
-                                ${product.image
-                                    ? `<img src="${product.image}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">`
-                                    : imgIcon}
+                                ${product.image 
+                                    ? `<img src="${product.image}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` 
+                                    : '<div style="width:40px;height:40px;background:#f1f5f9;border-radius:6px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-box" style="color:#94a3b8;"></i></div>'}
                                 <div>
                                     <strong>${product.name}</strong>
                                     <br><small class="text-muted">${product.category || 'Sans catégorie'}</small>
@@ -563,11 +550,11 @@
                             </div>
                         </td>
                         <td>${product.barcode || '-'}</td>
-                        ${isAdmin ? `<td>${isSvc ? '<span style="color:#6b7280;">—</span>' : Utils.formatCurrency(product.purchase_price || 0)}</td>` : ''}
+                        ${isAdmin ? `<td>${Utils.formatCurrency(product.purchase_price || 0)}</td>` : ''}
                         <td>${Utils.formatCurrency(product.sale_price)}</td>
-                        <td>${qtyDisplay}</td>
-                        <td><span class="stock-badge ${stockClass}" style="${isSvc ? 'background:rgba(168,85,247,0.15);color:#a78bfa;border:1px solid rgba(168,85,247,0.3);' : ''}">${stockText}</span></td>
-                        ${isAdmin ? `<td class="text-success"><strong>${isSvc ? '<span style="color:#6b7280;">—</span>' : Utils.formatCurrency(margin)}</strong></td>` : ''}
+                        <td><strong>${product.quantity}</strong></td>
+                        <td><span class="stock-badge ${stockClass}">${stockText}</span></td>
+                        ${isAdmin ? `<td class="text-success"><strong>${Utils.formatCurrency(margin)}</strong></td>` : ''}
                         ${isAdmin ? `<td>${Utils.formatCurrency(stockValue)}</td>` : ''}
                         <td>
                             <button class="btn btn-sm btn-secondary" onclick="Inventory.quickAddStock(${product.id}, '${product.name.replace(/'/g, "\\'")}', ${product.quantity})" title="Réapprovisionner">

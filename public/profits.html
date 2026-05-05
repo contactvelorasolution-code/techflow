@@ -13,322 +13,203 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="/css/style.css">
     <style>
-        /* ── Profits page styles ── */
-        .pf-filters {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
-            gap: 14px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 22px;
-        }
-        .pf-filter-group label {
-            display: block;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-            font-weight: 700;
-        }
-        .date-range { display: flex; align-items: center; gap: 8px; }
-        .date-range span { color: var(--text-muted); font-size: 12px; }
-
-        /* ── KPI cards ── */
-        .pf-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 14px; margin-bottom: 22px; }
-        .pf-kpi {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 18px 20px;
-            display: flex; align-items: center; gap: 16px;
-            transition: border-color 0.2s, transform 0.2s;
-        }
-        .pf-kpi:hover { border-color: rgba(37,99,235,0.4); transform: translateY(-2px); }
-        .pf-kpi-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
-        .pf-kpi-icon.green  { background: rgba(34,197,94,0.15);  color: #4ade80; }
-        .pf-kpi-icon.blue   { background: rgba(37,99,235,0.15);  color: #60a5fa; }
-        .pf-kpi-icon.red    { background: rgba(239,68,68,0.15);  color: #f87171; }
-        .pf-kpi-icon.purple { background: rgba(168,85,247,0.15); color: #c084fc; }
-        .pf-kpi-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 3px; }
-        .pf-kpi-value { font-size: 20px; font-weight: 700; color: var(--text-primary); line-height: 1.1; }
-        .pf-kpi-sub   { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
-
-        /* ── Chart card ── */
-        .pf-chart-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            margin-bottom: 22px;
-            overflow: hidden;
-        }
-        .pf-chart-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
-        }
-        .pf-chart-header h3 { margin: 0; font-size: 15px; }
-        .pf-legend { display: flex; gap: 16px; flex-wrap: wrap; }
-        .pf-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
-        .pf-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-        .pf-chart-body { padding: 20px; }
-        .pf-chart-body canvas { width: 100% !important; }
-
-        /* ── View toggle ── */
-        .view-toggle { display: flex; gap: 6px; }
-        .view-toggle-btn {
-            padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border-color);
-            background: var(--bg-input); color: var(--text-muted); cursor: pointer;
-            font-size: 12px; font-weight: 600; transition: all 0.15s;
-        }
-        .view-toggle-btn.active { background: rgba(37,99,235,0.2); border-color: #2563eb; color: #60a5fa; }
-
-        /* ── Daily table ── */
-        .pf-table-wrap {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            overflow: hidden;
-            margin-bottom: 22px;
-        }
-        .pf-table-head {
-            padding: 16px 20px;
-            background: rgba(37,99,235,0.05);
-            border-bottom: 1px solid var(--border-color);
-            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
-        }
-        .pf-table-head h3 { margin: 0; font-size: 15px; }
-        .pf-tbl { width: 100%; border-collapse: collapse; }
-        .pf-tbl thead tr { background: rgba(255,255,255,0.02); }
-        .pf-tbl th { padding: 11px 14px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 700; border-bottom: 1px solid var(--border-color); text-align: left; white-space: nowrap; }
-        .pf-tbl td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; font-size: 13px; }
-        .pf-tbl tbody tr:last-child td { border-bottom: none; }
-
-        /* Day summary row */
-        .day-row { cursor: pointer; background: rgba(37,99,235,0.04); }
-        .day-row:hover { background: rgba(37,99,235,0.08) !important; }
-        .day-row td { font-weight: 600; border-bottom: 1px solid rgba(37,99,235,0.1); }
-
-        /* Product sub-row */
-        .prod-row { background: rgba(255,255,255,0.01); }
-        .prod-row:hover { background: rgba(255,255,255,0.03) !important; }
-        .prod-row td:first-child { padding-left: 28px; }
-
-        /* Marge badge */
-        .marge-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-        .marge-high   { background: rgba(34,197,94,0.15);  color: #4ade80; }
-        .marge-medium { background: rgba(245,158,11,0.15); color: #fbbf24; }
-        .marge-low    { background: rgba(239,68,68,0.15);  color: #f87171; }
-
-        /* ── Top products table ── */
-        .perf-bar { width: 80px; height: 5px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; margin-left: 6px; }
-        .perf-fill { height: 100%; border-radius: 3px; }
-        .perf-fill.high   { background: #4ade80; }
-        .perf-fill.medium { background: #fbbf24; }
-        .perf-fill.low    { background: #f87171; }
-
-        /* ── Empty state ── */
-        .pf-empty { text-align: center; padding: 50px; color: var(--text-muted); }
-        .pf-empty i { font-size: 36px; opacity: 0.3; display: block; margin-bottom: 12px; }
-
-        /* ── Responsive ── */
-        @media (max-width: 768px) {
-            .pf-filters { grid-template-columns: 1fr 1fr; }
-            .pf-kpis    { grid-template-columns: 1fr 1fr; }
-            .pf-kpi-value { font-size: 16px; }
-            .pf-tbl th, .pf-tbl td { padding: 8px 10px; }
-        }
+        .pf-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:20px;}
+        .pf-filter-group label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted);margin-bottom:6px;}
+        .date-range{display:flex;align-items:center;gap:8px;}
+        .date-range span{color:var(--text-muted);font-size:12px;}
+        .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:20px;}
+        .kpi{background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:14px;transition:.2s;}
+        .kpi:hover{border-color:rgba(99,102,241,.4);transform:translateY(-2px);}
+        .kpi-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+        .kpi-icon.green{background:rgba(16,185,129,.12);color:#10b981;}
+        .kpi-icon.blue{background:rgba(59,130,246,.12);color:#3b82f6;}
+        .kpi-icon.red{background:rgba(239,68,68,.12);color:#ef4444;}
+        .kpi-icon.purple{background:rgba(139,92,246,.12);color:#8b5cf6;}
+        .kpi-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px;}
+        .kpi-value{font-size:18px;font-weight:700;color:var(--text-primary);}
+        .kpi-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}
+        .chart-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;margin-bottom:20px;overflow:hidden;}
+        .chart-hdr{padding:14px 18px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+        .chart-hdr h3{margin:0;font-size:14px;font-weight:700;}
+        .chart-legend{display:flex;gap:14px;flex-wrap:wrap;}
+        .leg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);}
+        .leg-dot{width:9px;height:9px;border-radius:50%;}
+        .chart-body{padding:16px;position:relative;height:280px;}
+        .chart-body canvas{width:100%!important;height:100%!important;}
+        .view-toggle{display:flex;gap:5px;}
+        .vt-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border-color);background:var(--bg-input);color:var(--text-muted);cursor:pointer;font-size:11px;font-weight:600;transition:.15s;}
+        .vt-btn.active{background:rgba(99,102,241,.2);border-color:#6366f1;color:#818cf8;}
+        .tbl-wrap{background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;overflow:hidden;margin-bottom:20px;}
+        .tbl-hdr{padding:14px 18px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+        .tbl-hdr h3{margin:0;font-size:14px;font-weight:700;}
+        .pf-tbl{width:100%;border-collapse:collapse;}
+        .pf-tbl th{padding:10px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);border-bottom:1px solid var(--border-color);white-space:nowrap;}
+        .pf-tbl td{padding:10px 14px;border-bottom:1px solid var(--border-color);font-size:13px;vertical-align:middle;}
+        .pf-tbl tbody tr:last-child td{border-bottom:none;}
+        .day-row{cursor:pointer;background:rgba(99,102,241,.05);}
+        .day-row:hover{background:rgba(99,102,241,.1)!important;}
+        .day-row td{font-weight:600;border-bottom:1px solid rgba(99,102,241,.15);}
+        .prod-row td{font-size:12px;}
+        .prod-row td:first-child{padding-left:30px;}
+        .prod-row:hover td{background:rgba(255,255,255,.02);}
+        .m-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+        .m-high{background:rgba(16,185,129,.15);color:#10b981;}
+        .m-med{background:rgba(245,158,11,.15);color:#f59e0b;}
+        .m-low{background:rgba(239,68,68,.15);color:#ef4444;}
+        .perf-bar{width:72px;height:4px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;display:inline-block;vertical-align:middle;margin-left:5px;}
+        .perf-fill{height:100%;border-radius:4px;}
+        .perf-fill.high{background:#10b981;}
+        .perf-fill.med{background:#f59e0b;}
+        .perf-fill.low{background:#ef4444;}
+        .empty-state{text-align:center;padding:50px;color:var(--text-muted);}
+        .empty-state i{font-size:36px;opacity:.25;display:block;margin-bottom:12px;}
     </style>
 </head>
 <body>
 <div class="app-container">
-    <!-- Sidebar -->
     <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-logo">
-                    <div class="sidebar-logo-icon">
-                        <i class="fas fa-cash-register"></i>
-                    </div>
-                    <div class="sidebar-logo-text">
-                        <h2> TechFlow </h2>
-                        <span>Point de Vente</span>
-                    </div>
-                </div>
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-icon"><i class="fas fa-cash-register"></i></div>
+                <div class="sidebar-logo-text"><h2>TechFlow</h2><span>Point de Vente</span></div>
             </div>
-            
-            <nav class="sidebar-nav">
-                <div class="nav-section">
-                    <div class="nav-section-title">Principal</div>
-                    <a href="/index.html" class="nav-item admin-only">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Dashboard</span>
-                    </a>
-                    <a href="/pos.html" class="nav-item">
-                        <i class="fas fa-cash-register"></i>
-                        <span>Point de Vente</span>
-                    </a>
-                </div>
-                
-                <div class="nav-section">
-                    <div class="nav-section-title">Gestion</div>
-                    <a href="/inventory.html" class="nav-item">
-                        <i class="fas fa-boxes"></i>
-                        <span>Inventaire</span>
-                    </a>
-                    <a href="/sales.html" class="nav-item">
-                        <i class="fas fa-receipt"></i>
-                        <span>Ventes</span>
-                    </a>
-                    <a href="/clients.html" class="nav-item">
-                        <i class="fas fa-users"></i>
-                        <span>Clients</span>
-                    </a>
-                </div>
-                
-                <div class="nav-section admin-only">
-                    <div class="nav-section-title">Administration</div>
-                    <a href="/profits.html" class="nav-item active">
-                        <i class="fas fa-chart-pie"></i>
-                        <span>Profits</span>
-                    </a>
-                    <a href="/treasury.html" class="nav-item">
-                        <i class="fas fa-wallet"></i>
-                        <span>Trésorerie</span>
-                    </a>
-                    <a href="/users.html" class="nav-item">
-                        <i class="fas fa-user-cog"></i>
-                        <span>Utilisateurs</span>
-                    </a>
-                    <a href="/config.html" class="nav-item">
-                        <i class="fas fa-cog"></i>
-                        <span>Configuration</span>
-                    </a>
-                </div>
-            </nav>
-            
-            <div class="sidebar-footer">
-                <div class="user-info">
-                    <div class="user-avatar">AD</div>
-                    <div class="user-details">
-                        <h4>Admin</h4>
-                        <span>Administrateur</span>
-                    </div>
-                </div>
-                <button class="btn-logout" onclick="Auth.logout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Déconnexion
-                </button>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Principal</div>
+                <a href="/index.html" class="nav-item admin-only"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
+                <a href="/pos.html" class="nav-item"><i class="fas fa-cash-register"></i><span>Point de Vente</span></a>
             </div>
-        </aside>
+            <div class="nav-section">
+                <div class="nav-section-title">Gestion</div>
+                <a href="/inventory.html" class="nav-item"><i class="fas fa-boxes"></i><span>Inventaire</span></a>
+                <a href="/sales.html" class="nav-item"><i class="fas fa-receipt"></i><span>Ventes</span></a>
+                <a href="/clients.html" class="nav-item"><i class="fas fa-users"></i><span>Clients</span></a>
+            </div>
+            <div class="nav-section admin-only">
+                <div class="nav-section-title">Administration</div>
+                <a href="/profits.html" class="nav-item active"><i class="fas fa-chart-pie"></i><span>Profits</span></a>
+                <a href="/treasury.html" class="nav-item"><i class="fas fa-wallet"></i><span>Trésorerie</span></a>
+                <a href="/users.html" class="nav-item"><i class="fas fa-user-cog"></i><span>Utilisateurs</span></a>
+                <a href="/config.html" class="nav-item"><i class="fas fa-cog"></i><span>Configuration</span></a>
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">AD</div>
+                <div class="user-details"><h4 id="userName">Admin</h4><span>Administrateur</span></div>
+            </div>
+            <button class="btn-logout" onclick="Auth.logout()"><i class="fas fa-sign-out-alt"></i> Déconnexion</button>
+        </div>
+    </aside>
 
     <main class="main-content">
         <header class="page-header">
             <div class="page-title">
-                <h1><i class="fas fa-chart-pie" style="color:#c084fc;font-size:22px;margin-right:10px;"></i>Analyse des Profits</h1>
-                <p>Marges, rentabilité et évolution</p>
+                <h1><i class="fas fa-chart-pie" style="color:#8b5cf6;margin-right:8px;"></i>Analyse des Profits</h1>
+                <p>Marges, rentabilité et évolution des ventes</p>
             </div>
             <div class="page-actions">
                 <button class="btn btn-secondary" onclick="P.load()"><i class="fas fa-sync-alt"></i> Actualiser</button>
-                <button class="btn btn-primary" onclick="P.exportPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
+                <button class="btn btn-primary" onclick="P.exportPDF()"><i class="fas fa-file-pdf"></i> Rapport PDF</button>
                 <button class="btn btn-secondary" onclick="P.exportCSV()"><i class="fas fa-file-csv"></i> CSV</button>
             </div>
         </header>
 
         <div class="page-body">
-            <!-- ── Filtres ── -->
-            <div class="pf-filters">
-                <div class="pf-filter-group">
-                    <label>Période</label>
-                    <select id="fPeriod" class="form-control" onchange="P.onPeriodChange()">
-                        <option value="today">Aujourd'hui</option>
-                        <option value="week">Cette semaine</option>
-                        <option value="month" selected>Ce mois</option>
-                        <option value="all">Tout l'historique</option>
-                        <option value="custom">Personnalisée</option>
-                    </select>
-                </div>
-                <div class="pf-filter-group" id="customDatesWrap" style="display:none;">
-                    <label>Dates</label>
-                    <div class="date-range">
-                        <input type="date" id="fStart" class="form-control" onchange="P.load()">
-                        <span>→</span>
-                        <input type="date" id="fEnd" class="form-control" onchange="P.load()">
-                    </div>
-                </div>
-                <div class="pf-filter-group">
-                    <label>Regroupement</label>
-                    <select id="fGroup" class="form-control" onchange="P.load()">
-                        <option value="daily" selected>Journalier</option>
-                        <option value="weekly">Hebdomadaire</option>
-                        <option value="monthly">Mensuel</option>
-                    </select>
-                </div>
-                <div class="pf-filter-group">
-                    <label>Vue</label>
-                    <div class="view-toggle">
-                        <button class="view-toggle-btn active" id="btnChart" onclick="P.setView('chart')"><i class="fas fa-chart-line"></i> Graphique</button>
-                        <button class="view-toggle-btn" id="btnTable" onclick="P.setView('table')"><i class="fas fa-table"></i> Tableau</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ── KPIs ── -->
-            <div class="pf-kpis">
-                <div class="pf-kpi">
-                    <div class="pf-kpi-icon green"><i class="fas fa-coins"></i></div>
-                    <div>
-                        <div class="pf-kpi-label">Profit net</div>
-                        <div class="pf-kpi-value" id="kpiProfit">—</div>
-                        <div class="pf-kpi-sub" id="kpiMargin">Marge : —</div>
-                    </div>
-                </div>
-                <div class="pf-kpi">
-                    <div class="pf-kpi-icon blue"><i class="fas fa-money-bill-wave"></i></div>
-                    <div>
-                        <div class="pf-kpi-label">Chiffre d'affaires</div>
-                        <div class="pf-kpi-value" id="kpiRevenue">—</div>
-                        <div class="pf-kpi-sub" id="kpiSales">— ventes</div>
-                    </div>
-                </div>
-                <div class="pf-kpi">
-                    <div class="pf-kpi-icon red"><i class="fas fa-calculator"></i></div>
-                    <div>
-                        <div class="pf-kpi-label">Coût total</div>
-                        <div class="pf-kpi-value" id="kpiCost">—</div>
-                        <div class="pf-kpi-sub">Prix d'achat cumulé</div>
-                    </div>
-                </div>
-                <div class="pf-kpi">
-                    <div class="pf-kpi-icon purple"><i class="fas fa-trophy"></i></div>
-                    <div>
-                        <div class="pf-kpi-label">Meilleur jour</div>
-                        <div class="pf-kpi-value" id="kpiBestDay">—</div>
-                        <div class="pf-kpi-sub" id="kpiBestDayVal">—</div>
+            <!-- Filtres -->
+            <div class="card" style="margin-bottom:20px;">
+                <div class="card-body">
+                    <div class="pf-filters">
+                        <div class="pf-filter-group">
+                            <label>Période</label>
+                            <select id="fPeriod" class="form-control" onchange="P.onPeriodChange()">
+                                <option value="all" selected>Tout l'historique</option>
+                                <option value="today">Aujourd'hui</option>
+                                <option value="week">Cette semaine (7j)</option>
+                                <option value="month">Ce mois (30j)</option>
+                                <option value="year">Cette année (365j)</option>
+                                <option value="custom">Personnalisée</option>
+                            </select>
+                        </div>
+                        <div class="pf-filter-group" id="customWrap" style="display:none;">
+                            <label>Dates</label>
+                            <div class="date-range">
+                                <input type="date" id="fStart" class="form-control" onchange="P.load()">
+                                <span>→</span>
+                                <input type="date" id="fEnd" class="form-control" onchange="P.load()">
+                            </div>
+                        </div>
+                        <div class="pf-filter-group">
+                            <label>Vue</label>
+                            <div class="view-toggle">
+                                <button class="vt-btn active" id="btnChart" onclick="P.setView('chart')">
+                                    <i class="fas fa-chart-line"></i> Graphique
+                                </button>
+                                <button class="vt-btn" id="btnTable" onclick="P.setView('table')">
+                                    <i class="fas fa-table"></i> Tableau
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ── Graphique ── -->
-            <div class="pf-chart-card" id="chartSection">
-                <div class="pf-chart-header">
-                    <h3><i class="fas fa-chart-line" style="color:#60a5fa;margin-right:8px;"></i>Évolution des profits</h3>
-                    <div class="pf-legend">
-                        <span class="pf-legend-item"><span class="pf-legend-dot" style="background:#60a5fa;"></span>Revenus</span>
-                        <span class="pf-legend-item"><span class="pf-legend-dot" style="background:#4ade80;"></span>Profits</span>
-                        <span class="pf-legend-item"><span class="pf-legend-dot" style="background:#f87171;"></span>Coûts</span>
+            <!-- KPIs -->
+            <div class="kpi-grid">
+                <div class="kpi">
+                    <div class="kpi-icon green"><i class="fas fa-coins"></i></div>
+                    <div>
+                        <div class="kpi-label">Profit net</div>
+                        <div class="kpi-value" id="kpiProfit">—</div>
+                        <div class="kpi-sub" id="kpiMargin">Marge : —</div>
                     </div>
                 </div>
-                <div class="pf-chart-body">
-                    <canvas id="profitChart" height="280"></canvas>
+                <div class="kpi">
+                    <div class="kpi-icon blue"><i class="fas fa-money-bill-wave"></i></div>
+                    <div>
+                        <div class="kpi-label">Chiffre d'affaires</div>
+                        <div class="kpi-value" id="kpiRevenue">—</div>
+                        <div class="kpi-sub" id="kpiDays">— jours de vente</div>
+                    </div>
+                </div>
+                <div class="kpi">
+                    <div class="kpi-icon red"><i class="fas fa-calculator"></i></div>
+                    <div>
+                        <div class="kpi-label">Coût d'achat total</div>
+                        <div class="kpi-value" id="kpiCost">—</div>
+                        <div class="kpi-sub">Cumul prix d'achat</div>
+                    </div>
+                </div>
+                <div class="kpi">
+                    <div class="kpi-icon purple"><i class="fas fa-trophy"></i></div>
+                    <div>
+                        <div class="kpi-label">Meilleur jour</div>
+                        <div class="kpi-value" id="kpiBestDay">—</div>
+                        <div class="kpi-sub" id="kpiBestVal">—</div>
+                    </div>
                 </div>
             </div>
 
-            <!-- ── Tableau journalier ── -->
-            <div class="pf-table-wrap" id="tableSection" style="display:none;">
-                <div class="pf-table-head">
-                    <h3><i class="fas fa-calendar-day" style="color:#60a5fa;margin-right:8px;"></i>Détail journalier</h3>
+            <!-- Graphique -->
+            <div class="chart-card" id="chartSection">
+                <div class="chart-hdr">
+                    <h3><i class="fas fa-chart-area" style="color:#6366f1;margin-right:6px;"></i>Évolution des profits</h3>
+                    <div class="chart-legend">
+                        <span class="leg"><span class="leg-dot" style="background:#3b82f6;"></span>Revenus</span>
+                        <span class="leg"><span class="leg-dot" style="background:#10b981;"></span>Profits</span>
+                        <span class="leg"><span class="leg-dot" style="background:#ef4444;"></span>Coûts</span>
+                    </div>
+                </div>
+                <div class="chart-body">
+                    <canvas id="profitChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Tableau journalier -->
+            <div class="tbl-wrap" id="tableSection" style="display:none;">
+                <div class="tbl-hdr">
+                    <h3><i class="fas fa-calendar-day" style="color:#6366f1;margin-right:6px;"></i>Détail journalier</h3>
                     <div style="display:flex;gap:8px;">
                         <button class="btn btn-sm btn-secondary" onclick="P.expandAll()"><i class="fas fa-expand-alt"></i> Tout ouvrir</button>
                         <button class="btn btn-sm btn-secondary" onclick="P.collapseAll()"><i class="fas fa-compress-alt"></i> Tout fermer</button>
@@ -340,25 +221,25 @@
                             <tr>
                                 <th>Date / Produit</th>
                                 <th class="text-center">Qté</th>
-                                <th class="text-right">Px achat</th>
-                                <th class="text-right">Px vente</th>
+                                <th class="text-right">Px achat/u</th>
+                                <th class="text-right">Px vente/u</th>
                                 <th class="text-right">Revenus</th>
                                 <th class="text-right">Coûts</th>
                                 <th class="text-right">Profit</th>
                                 <th class="text-right">Marge</th>
                             </tr>
                         </thead>
-                        <tbody id="dailyTbody">
-                            <tr><td colspan="8" class="pf-empty"><i class="fas fa-spinner fa-spin"></i>Chargement…</td></tr>
+                        <tbody id="dailyBody">
+                            <tr><td colspan="8" class="empty-state"><i class="fas fa-spinner fa-spin"></i>Chargement…</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- ── Top produits ── -->
-            <div class="pf-table-wrap">
-                <div class="pf-table-head">
-                    <h3><i class="fas fa-trophy" style="color:#fbbf24;margin-right:8px;"></i>Top produits les plus rentables</h3>
+            <!-- Top produits -->
+            <div class="tbl-wrap">
+                <div class="tbl-hdr">
+                    <h3><i class="fas fa-trophy" style="color:#f59e0b;margin-right:6px;"></i>Top produits les plus rentables</h3>
                 </div>
                 <div style="overflow-x:auto;">
                     <table class="pf-tbl">
@@ -373,95 +254,80 @@
                                 <th>Performance</th>
                             </tr>
                         </thead>
-                        <tbody id="topTbody">
-                            <tr><td colspan="7" class="pf-empty"><i class="fas fa-spinner fa-spin"></i></td></tr>
+                        <tbody id="topBody">
+                            <tr><td colspan="7" class="empty-state"><i class="fas fa-spinner fa-spin"></i></td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- Exports -->
+            <div class="card">
+                <div class="card-body" style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <button class="btn btn-secondary" onclick="P.exportCSV()"><i class="fas fa-file-csv"></i> CSV produits</button>
+                    <button class="btn btn-primary" onclick="P.exportPDF()"><i class="fas fa-file-pdf"></i> Rapport PDF complet</button>
                 </div>
             </div>
         </div>
     </main>
 </div>
 
-<!-- Modal détail produit -->
-<div class="modal-overlay" id="prodDetailModal">
-    <div class="modal" style="max-width:700px;">
-        <div class="modal-header">
-            <h3 id="prodDetailTitle"><i class="fas fa-chart-bar"></i> Détail produit</h3>
-            <button class="modal-close" onclick="Modal.hide('prodDetailModal')">&times;</button>
-        </div>
-        <div class="modal-body" id="prodDetailBody"></div>
-    </div>
-</div>
-
 <script src="/js/app.js"></script>
 <script>
-// ══════════════════════════════════════════════════════
-//  PROFITS MODULE — P
-// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
+//  PROFITS MODULE
+// ══════════════════════════════════════════════════
 const P = {
-    chart: null,
-    view: 'chart',         // 'chart' | 'table'
-    expanded: new Set(),   // dates ouvertes dans le tableau
-    _daily: [],            // données journalières stockées
+    view:      'chart',
+    chart:     null,
+    expanded:  new Set(),
+    _daily:    [],  // cache journalier
 
-    // ── Helpers ─────────────────────────────────────
-    fmt(v) { return Utils.formatCurrency(parseFloat(v) || 0); },
-    // PDF-safe: use regular space as thousand separator
-    fmtPdf(v) {
+    // ── Helpers ───────────────────────────────────
+    // Formatage nombre avec espace comme séparateur milliers (ASCII 32, compatible PDF)
+    num(v) {
+        const n = Math.round(parseFloat(v) || 0);
+        return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0') + ' Ar';
+    },
+    // Version sans unité pour PDF (utilise espace ASCII normal)
+    numPdf(v) {
         const n = Math.round(parseFloat(v) || 0);
         return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' Ar';
     },
+    pct(v) { return (parseFloat(v)||0).toFixed(1) + '%'; },
 
     fmtDate(s) {
         if (!s) return '—';
-        // s peut être 'YYYY-MM-DD', 'YYYY-MM', 'YYYY-IW', etc.
         const p = String(s).split('-');
-        if (p.length === 3) {
-            // journalier : DD/MM/YYYY
-            return `${p[2]}/${p[1]}/${p[0]}`;
-        } else if (p.length === 2 && p[1].length === 2) {
-            // mensuel : MM/YYYY
-            return `${p[1]}/${p[0]}`;
-        } else if (p.length === 2) {
-            // hebdomadaire : S##/YYYY
-            return `S${p[1]}/${p[0]}`;
-        }
+        if (p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
+        if (p.length === 2) return `${p[1]}/${p[0]}`;
         return s;
     },
 
-    margeBadge(pct) {
-        const cls = pct >= 30 ? 'high' : pct >= 15 ? 'medium' : 'low';
-        return `<span class="marge-badge marge-${cls}">${parseFloat(pct||0).toFixed(1)}%</span>`;
+    mBadge(pct) {
+        const cls = pct >= 30 ? 'm-high' : pct >= 15 ? 'm-med' : 'm-low';
+        return `<span class="m-badge ${cls}">${this.pct(pct)}</span>`;
     },
 
     getParams() {
-        const p      = document.getElementById('fPeriod').value;
-        const group  = document.getElementById('fGroup').value;
-        const params = new URLSearchParams({ period: p });
-        if (p === 'custom') {
+        const period = document.getElementById('fPeriod').value;
+        const p = new URLSearchParams({ period });
+        if (period === 'custom') {
             const s = document.getElementById('fStart').value;
             const e = document.getElementById('fEnd').value;
-            if (s) params.set('start_date', s);
-            if (e) params.set('end_date', e);
+            if (s) p.set('start_date', s);
+            if (e) p.set('end_date', e);
         }
-        return { period: p, group, params };
+        return { period, params: p };
     },
 
-    // ── Period change ────────────────────────────────
+    // ── Period change ─────────────────────────────
     onPeriodChange() {
-        const p = document.getElementById('fPeriod').value;
-        document.getElementById('customDatesWrap').style.display = p === 'custom' ? '' : 'none';
-        // Auto-set groupement selon période
-        const gSel = document.getElementById('fGroup');
-        if (p === 'today') gSel.value = 'daily';
-        else if (p === 'week') gSel.value = 'daily';
-        else if (p === 'month') gSel.value = 'daily';
-        else if (p === 'all') gSel.value = 'monthly';
-        if (p !== 'custom') this.load();
+        const v = document.getElementById('fPeriod').value;
+        document.getElementById('customWrap').style.display = v === 'custom' ? '' : 'none';
+        if (v !== 'custom') this.load();
     },
 
-    // ── View toggle ──────────────────────────────────
     setView(v) {
         this.view = v;
         document.getElementById('chartSection').style.display = v === 'chart' ? '' : 'none';
@@ -469,140 +335,75 @@ const P = {
         document.getElementById('btnChart').classList.toggle('active', v === 'chart');
         document.getElementById('btnTable').classList.toggle('active', v === 'table');
         if (v === 'table') this.renderDaily(this._daily);
+        if (v === 'chart') this.buildChart();
     },
 
-    // ── Main load ────────────────────────────────────
+    // ── Main load ─────────────────────────────────
     async load() {
         try {
-            await Promise.all([
-                this.loadKPIs(),
-                this.loadChart(),
-                this.loadTopProducts()
-            ]);
+            const { params } = this.getParams();
+            // Load daily data (used for KPIs, chart, table)
+            const daily = await API.get(`/api/profits/daily?${params}`);
+            this._daily = daily || [];
+            this.renderKPIs(this._daily);
+            if (this.view === 'chart') this.buildChart();
+            if (this.view === 'table') this.renderDaily(this._daily);
+            // Top products
+            await this.loadTop();
         } catch(e) {
-            console.error('load error', e);
+            console.error('P.load error:', e);
             Toast.error('Erreur de chargement');
         }
     },
 
-    // ── KPIs ─────────────────────────────────────────
-    async loadKPIs() {
-        const { params } = this.getParams();
-        try {
-            const data = await API.get(`/api/profits/daily?${params}`);
-            this._daily = data || [];
+    // ── KPIs ──────────────────────────────────────
+    renderKPIs(daily) {
+        let rev = 0, cost = 0, profit = 0;
+        let bestProfit = -Infinity, bestDate = null, bestVal = 0;
 
-            let rev = 0, cost = 0, profit = 0, bestProfit = -Infinity, bestDate = null, bestVal = 0;
-            this._daily.forEach(d => {
-                rev    += parseFloat(d.totalRevenue) || 0;
-                cost   += parseFloat(d.totalCost)    || 0;
-                profit += parseFloat(d.totalProfit)  || 0;
-                const dp = parseFloat(d.totalProfit) || 0;
-                if (dp > bestProfit) { bestProfit = dp; bestDate = d.date; bestVal = dp; }
-            });
-            const margin = rev > 0 ? (profit / rev * 100) : 0;
-
-            const safe = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
-            safe('kpiProfit',  this.fmt(profit));
-            safe('kpiMargin',  `Marge : ${margin.toFixed(1)}%`);
-            safe('kpiRevenue', this.fmt(rev));
-            safe('kpiSales',   `${this._daily.length} jour(s) de vente`);
-            safe('kpiCost',    this.fmt(cost));
-            safe('kpiBestDay', bestDate ? this.fmtDate(bestDate) : '—');
-            safe('kpiBestDayVal', bestDate ? this.fmt(bestVal) : '—');
-
-            if (this.view === 'table') this.renderDaily(this._daily);
-        } catch(e) {
-            console.error('kpi error', e);
-        }
-    },
-
-    // ── Chart ─────────────────────────────────────────
-    async loadChart() {
-        const { params, group, period } = this.getParams();
-
-        // Pour le graphique on utilise /api/profits/summary avec le bon groupement
-        const summaryParams = new URLSearchParams(params);
-        // Map group → period param que le serveur comprend
-        const groupMap = { daily: 'daily', weekly: 'weekly', monthly: 'monthly' };
-        summaryParams.set('period', groupMap[group] || 'daily');
-        // Repasser les dates custom si nécessaire
-        if (period === 'custom') {
-            const s = document.getElementById('fStart').value;
-            const e = document.getElementById('fEnd').value;
-            if (s) summaryParams.set('start_date', s);
-            if (e) summaryParams.set('end_date', e);
-        } else {
-            // Pour daily/weekly/monthly, le serveur filtre par plage
-            // On doit passer la période originale différemment
-            // → utiliser les données déjà chargées _daily pour construire le chart
-        }
-
-        try {
-            // On construit le chart depuis _daily pour avoir les vraies dates
-            // selon le groupement choisi par l'utilisateur
-            const raw = this._daily;
-            if (!raw || raw.length === 0) {
-                this.renderChart([], group);
-                return;
-            }
-
-            // Regrouper selon fGroup
-            const grouped = this.groupData(raw, group);
-            this.renderChart(grouped, group);
-        } catch(e) {
-            console.error('chart error', e);
-            this.renderChart([], group);
-        }
-    },
-
-    // ── Regroup daily data by week/month ──────────────
-    groupData(daily, group) {
-        if (group === 'daily') return daily.map(d => ({
-            label: this.fmtDate(d.date),
-            revenue: parseFloat(d.totalRevenue) || 0,
-            cost:    parseFloat(d.totalCost)    || 0,
-            profit:  parseFloat(d.totalProfit)  || 0
-        }));
-
-        const map = new Map();
         daily.forEach(d => {
-            const dt = new Date(d.date + 'T00:00:00');
-            let key;
-            if (group === 'weekly') {
-                // Numéro de semaine ISO
-                const startOfYear = new Date(dt.getFullYear(), 0, 1);
-                const week = Math.ceil(((dt - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
-                key = `S${String(week).padStart(2,'0')} ${dt.getFullYear()}`;
-            } else {
-                // mensuel
-                const m = String(dt.getMonth() + 1).padStart(2, '0');
-                key = `${m}/${dt.getFullYear()}`;
-            }
-            if (!map.has(key)) map.set(key, { label: key, revenue: 0, cost: 0, profit: 0 });
-            const g = map.get(key);
-            g.revenue += parseFloat(d.totalRevenue) || 0;
-            g.cost    += parseFloat(d.totalCost)    || 0;
-            g.profit  += parseFloat(d.totalProfit)  || 0;
+            const r = parseFloat(d.totalRevenue) || 0;
+            const c = parseFloat(d.totalCost)    || 0;
+            const p = parseFloat(d.totalProfit)  || 0;
+            rev    += r;
+            cost   += c;
+            profit += p;
+            if (p > bestProfit) { bestProfit = p; bestDate = d.date; bestVal = p; }
         });
-        return [...map.values()];
+
+        const margin = rev > 0 ? (profit / rev * 100) : 0;
+        const safe = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+        safe('kpiProfit',  this.num(profit));
+        safe('kpiMargin',  `Marge : ${this.pct(margin)}`);
+        safe('kpiRevenue', this.num(rev));
+        safe('kpiDays',    `${daily.length} jour(s) de vente`);
+        safe('kpiCost',    this.num(cost));
+        safe('kpiBestDay', bestDate ? this.fmtDate(bestDate) : '—');
+        safe('kpiBestVal', bestDate ? this.num(bestVal) : '—');
     },
 
-    renderChart(grouped, group) {
+    // ── Chart ─────────────────────────────────────
+    buildChart() {
         const ctx = document.getElementById('profitChart');
         if (!ctx) return;
         if (this.chart) { this.chart.destroy(); this.chart = null; }
 
-        if (!grouped.length) {
-            // Afficher message vide
-            ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+        if (!this._daily.length) {
+            // Draw empty message
             return;
         }
 
-        const labels   = grouped.map(g => g.label);
-        const revenues = grouped.map(g => g.revenue);
-        const profits  = grouped.map(g => g.profit);
-        const costs    = grouped.map(g => g.cost);
+        // Group data based on period
+        const period  = document.getElementById('fPeriod').value;
+        const grouped = this.groupForChart(this._daily, period);
+        const labels  = grouped.map(g => g.label);
+        const revs    = grouped.map(g => g.revenue);
+        const profits = grouped.map(g => g.profit);
+        const costs   = grouped.map(g => g.cost);
+
+        const darkMode = document.documentElement.getAttribute('data-theme') === 'dark' || true;
+        const gridCol  = 'rgba(255,255,255,0.05)';
+        const tickCol  = '#6b7280';
 
         this.chart = new Chart(ctx, {
             type: 'line',
@@ -611,39 +412,33 @@ const P = {
                 datasets: [
                     {
                         label: 'Revenus',
-                        data: revenues,
-                        borderColor: '#60a5fa',
-                        backgroundColor: 'rgba(96,165,250,0.08)',
-                        fill: true,
-                        tension: 0.35,
-                        pointBackgroundColor: '#60a5fa',
+                        data: revs,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59,130,246,0.08)',
+                        fill: true, tension: 0.35,
+                        pointBackgroundColor: '#3b82f6',
                         pointRadius: grouped.length <= 31 ? 4 : 2,
-                        pointHoverRadius: 6,
-                        borderWidth: 2
+                        pointHoverRadius: 6, borderWidth: 2
                     },
                     {
                         label: 'Profits',
                         data: profits,
-                        borderColor: '#4ade80',
-                        backgroundColor: 'rgba(74,222,128,0.08)',
-                        fill: true,
-                        tension: 0.35,
-                        pointBackgroundColor: '#4ade80',
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        fill: true, tension: 0.35,
+                        pointBackgroundColor: '#10b981',
                         pointRadius: grouped.length <= 31 ? 4 : 2,
-                        pointHoverRadius: 6,
-                        borderWidth: 2
+                        pointHoverRadius: 6, borderWidth: 2
                     },
                     {
                         label: 'Coûts',
                         data: costs,
-                        borderColor: '#f87171',
-                        backgroundColor: 'rgba(248,113,113,0.06)',
-                        fill: true,
-                        tension: 0.35,
-                        pointBackgroundColor: '#f87171',
-                        pointRadius: grouped.length <= 31 ? 4 : 2,
-                        pointHoverRadius: 6,
-                        borderWidth: 2
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239,68,68,0.05)',
+                        fill: true, tension: 0.35,
+                        pointBackgroundColor: '#ef4444',
+                        pointRadius: grouped.length <= 31 ? 3 : 2,
+                        pointHoverRadius: 5, borderWidth: 1.5
                     }
                 ]
             },
@@ -652,40 +447,36 @@ const P = {
                 maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
                 plugins: {
-                    legend: { display: false }, // on a notre propre légende
+                    legend: { display: false },
                     tooltip: {
                         backgroundColor: 'rgba(17,24,39,0.95)',
-                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderColor: 'rgba(255,255,255,0.08)',
                         borderWidth: 1,
                         titleColor: '#f9fafb',
-                        bodyColor: '#d1d5db',
+                        bodyColor: '#9ca3af',
                         padding: 12,
                         callbacks: {
-                            label: ctx => ` ${ctx.dataset.label} : ${Utils.formatCurrency(ctx.parsed.y)}`
+                            label: c => ` ${c.dataset.label} : ${this.num(c.parsed.y)}`
                         }
                     }
                 },
                 scales: {
                     x: {
-                        grid: { color: 'rgba(255,255,255,0.04)' },
+                        grid: { color: gridCol },
                         ticks: {
-                            color: '#6b7280',
-                            font: { size: 11 },
-                            maxRotation: 45,
-                            // Limiter le nombre de labels affichés si trop de points
-                            maxTicksLimit: 20
+                            color: tickCol, font: { size: 11 },
+                            maxRotation: 45, maxTicksLimit: 20
                         }
                     },
                     y: {
                         beginAtZero: true,
-                        grid: { color: 'rgba(255,255,255,0.04)' },
+                        grid: { color: gridCol },
                         ticks: {
-                            color: '#6b7280',
-                            font: { size: 11 },
+                            color: tickCol, font: { size: 11 },
                             callback: v => {
-                                if (v >= 1000000) return (v/1000000).toFixed(1) + 'M Ar';
-                                if (v >= 1000) return (v/1000).toFixed(0) + 'k Ar';
-                                return v + ' Ar';
+                                if (v >= 1e6) return (v/1e6).toFixed(1) + 'M';
+                                if (v >= 1e3) return (v/1e3).toFixed(0) + 'k';
+                                return v;
                             }
                         }
                     }
@@ -694,49 +485,76 @@ const P = {
         });
     },
 
-    // ── Daily table ──────────────────────────────────
+    groupForChart(daily, period) {
+        // Always use daily data points for accuracy
+        // Just decide how to group based on period
+        if (period === 'all' || period === 'year') {
+            // Group by month for all/year
+            const map = new Map();
+            daily.forEach(d => {
+                const dt = new Date(d.date + 'T00:00:00');
+                const key = `${String(dt.getMonth()+1).padStart(2,'0')}/${String(dt.getFullYear()).slice(2)}`;
+                if (!map.has(key)) map.set(key, { label: key, revenue: 0, profit: 0, cost: 0 });
+                const g = map.get(key);
+                g.revenue += parseFloat(d.totalRevenue) || 0;
+                g.profit  += parseFloat(d.totalProfit)  || 0;
+                g.cost    += parseFloat(d.totalCost)    || 0;
+            });
+            return [...map.values()].reverse();
+        }
+        // For today/week/month/custom: show day by day
+        return [...daily].reverse().map(d => ({
+            label:   this.fmtDate(d.date),
+            revenue: parseFloat(d.totalRevenue) || 0,
+            profit:  parseFloat(d.totalProfit)  || 0,
+            cost:    parseFloat(d.totalCost)    || 0
+        }));
+    },
+
+    // ── Daily table ───────────────────────────────
     renderDaily(data) {
-        const tbody = document.getElementById('dailyTbody');
+        const tbody = document.getElementById('dailyBody');
         if (!data || !data.length) {
-            tbody.innerHTML = `<tr><td colspan="8"><div class="pf-empty"><i class="fas fa-inbox"></i>Aucune donnée pour cette période</div></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fas fa-inbox"></i>Aucune donnée pour cette période</div></td></tr>`;
             return;
         }
 
         let html = '';
         data.forEach(day => {
-            const isOpen    = this.expanded.has(day.date);
-            const dayRev    = parseFloat(day.totalRevenue) || 0;
-            const dayCost   = parseFloat(day.totalCost)   || 0;
-            const dayProfit = parseFloat(day.totalProfit) || 0;
-            const dayMargin = dayRev > 0 ? (dayProfit / dayRev * 100) : 0;
-            const hasProds  = day.products && day.products.length > 0;
+            const isOpen = this.expanded.has(day.date);
+            const rev    = parseFloat(day.totalRevenue) || 0;
+            const cost   = parseFloat(day.totalCost)    || 0;
+            const profit = parseFloat(day.totalProfit)  || 0;
+            const margin = rev > 0 ? (profit / rev * 100) : 0;
+            const count  = day.products ? day.products.length : 0;
 
             html += `
             <tr class="day-row" onclick="P.toggleDay('${day.date}')">
                 <td>
-                    <i class="fas fa-chevron-${isOpen ? 'down' : 'right'}" style="font-size:10px;color:var(--text-muted);margin-right:8px;"></i>
-                    <i class="fas fa-calendar-day" style="color:#60a5fa;margin-right:8px;font-size:12px;"></i>
+                    <i class="fas fa-chevron-${isOpen?'down':'right'}" style="font-size:10px;color:var(--text-muted);margin-right:8px;"></i>
+                    <i class="fas fa-calendar-day" style="color:#6366f1;margin-right:6px;font-size:11px;"></i>
                     <strong>${this.fmtDate(day.date)}</strong>
-                    <span style="font-size:11px;color:var(--text-muted);margin-left:8px;">${hasProds ? day.products.length + ' article(s)' : ''}</span>
+                    <span style="font-size:11px;color:var(--text-muted);margin-left:8px;">${count} article(s)</span>
                 </td>
                 <td class="text-center" style="color:var(--text-muted);">—</td>
                 <td class="text-right" style="color:var(--text-muted);">—</td>
                 <td class="text-right" style="color:var(--text-muted);">—</td>
-                <td class="text-right"><strong>${this.fmt(dayRev)}</strong></td>
-                <td class="text-right">${this.fmt(dayCost)}</td>
-                <td class="text-right"><strong style="color:${dayProfit >= 0 ? '#4ade80' : '#f87171'};">${this.fmt(dayProfit)}</strong></td>
-                <td class="text-right">${this.margeBadge(dayMargin)}</td>
+                <td class="text-right"><strong>${this.num(rev)}</strong></td>
+                <td class="text-right">${this.num(cost)}</td>
+                <td class="text-right"><strong style="color:${profit>=0?'#10b981':'#ef4444'};">${this.num(profit)}</strong></td>
+                <td class="text-right">${this.mBadge(margin)}</td>
             </tr>`;
 
-            if (isOpen && hasProds) {
+            if (isOpen && day.products && day.products.length) {
                 day.products.forEach(pr => {
-                    const rev    = parseFloat(pr.total_revenue) || 0;
-                    const cost   = parseFloat(pr.total_cost)   || 0;
-                    const profit = parseFloat(pr.total_profit) || 0;
-                    const qty    = parseInt(pr.total_quantity) || 0;
-                    const margin = rev > 0 ? (profit / rev * 100) : 0;
-                    const unitCost = qty > 0 ? cost / qty : 0;
-                    const unitRev  = qty > 0 ? rev  / qty : 0;
+                    // API fields: total_revenue, total_cost, total_profit, total_quantity, product_name
+                    const pRev    = parseFloat(pr.total_revenue) || 0;
+                    const pCost   = parseFloat(pr.total_cost)    || 0;
+                    const pProfit = parseFloat(pr.total_profit)  || 0;
+                    const qty     = parseInt(pr.total_quantity)  || 0;
+                    const pMargin = pRev > 0 ? (pProfit / pRev * 100) : 0;
+                    const unitCost = qty > 0 ? pCost / qty : 0;
+                    const unitRev  = qty > 0 ? pRev  / qty : 0;
 
                     html += `
                     <tr class="prod-row">
@@ -745,12 +563,12 @@ const P = {
                             ${Utils.escapeHtml(pr.product_name)}
                         </td>
                         <td class="text-center">${qty}</td>
-                        <td class="text-right" style="color:var(--text-muted);font-size:12px;">${this.fmt(unitCost)}</td>
-                        <td class="text-right" style="color:var(--text-muted);font-size:12px;">${this.fmt(unitRev)}</td>
-                        <td class="text-right">${this.fmt(rev)}</td>
-                        <td class="text-right" style="color:var(--text-muted);">${this.fmt(cost)}</td>
-                        <td class="text-right" style="color:${profit >= 0 ? '#4ade80' : '#f87171'};">${this.fmt(profit)}</td>
-                        <td class="text-right">${this.margeBadge(margin)}</td>
+                        <td class="text-right" style="color:var(--text-muted);font-size:12px;">${this.num(unitCost)}</td>
+                        <td class="text-right" style="color:var(--text-muted);font-size:12px;">${this.num(unitRev)}</td>
+                        <td class="text-right">${this.num(pRev)}</td>
+                        <td class="text-right" style="color:var(--text-muted);">${this.num(pCost)}</td>
+                        <td class="text-right" style="color:${pProfit>=0?'#10b981':'#ef4444'};">${this.num(pProfit)}</td>
+                        <td class="text-right">${this.mBadge(pMargin)}</td>
                     </tr>`;
                 });
             }
@@ -764,155 +582,191 @@ const P = {
         else this.expanded.add(date);
         this.renderDaily(this._daily);
     },
+    expandAll()   { this._daily.forEach(d => this.expanded.add(d.date)); this.renderDaily(this._daily); },
+    collapseAll() { this.expanded.clear(); this.renderDaily(this._daily); },
 
-    expandAll()  { this._daily.forEach(d => this.expanded.add(d.date));  this.renderDaily(this._daily); },
-    collapseAll(){ this.expanded.clear(); this.renderDaily(this._daily); },
-
-    // ── Top products ─────────────────────────────────
-    async loadTopProducts() {
-        const { params } = this.getParams();
+    // ── Top products ──────────────────────────────
+    async loadTop() {
         try {
+            const { params } = this.getParams();
             const data = await API.get(`/api/profits/top-products?${params}`);
-            const tbody = document.getElementById('topTbody');
+            const tbody = document.getElementById('topBody');
             if (!data || !data.length) {
-                tbody.innerHTML = `<tr><td colspan="7"><div class="pf-empty"><i class="fas fa-inbox"></i>Aucun produit</div></td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="fas fa-inbox"></i>Aucun produit</div></td></tr>`;
                 return;
             }
             tbody.innerHTML = data.slice(0, 15).map((p, i) => {
-                const margin  = parseFloat(p.profit_margin) || 0;
-                const cls     = margin >= 30 ? 'high' : margin >= 15 ? 'medium' : 'low';
-                const profitColor = parseFloat(p.total_profit) >= 0 ? '#4ade80' : '#f87171';
+                const margin = parseFloat(p.profit_margin) || 0;
+                const cls = margin >= 30 ? 'high' : margin >= 15 ? 'med' : 'low';
                 return `
                 <tr>
                     <td><strong style="color:var(--text-muted);">${i+1}</strong></td>
-                    <td>
-                        <strong>${Utils.escapeHtml(p.product_name)}</strong>
-                    </td>
+                    <td><strong>${Utils.escapeHtml(p.product_name)}</strong></td>
                     <td class="text-center">${p.total_quantity || 0}</td>
-                    <td class="text-right">${this.fmt(p.total_revenue)}</td>
-                    <td class="text-right"><strong style="color:${profitColor};">${this.fmt(p.total_profit)}</strong></td>
-                    <td class="text-right">${this.margeBadge(margin)}</td>
+                    <td class="text-right">${this.num(p.total_revenue)}</td>
+                    <td class="text-right"><strong style="color:${parseFloat(p.total_profit)>=0?'#10b981':'#ef4444'};">${this.num(p.total_profit)}</strong></td>
+                    <td class="text-right">${this.mBadge(margin)}</td>
                     <td>
                         <div style="display:flex;align-items:center;gap:6px;">
                             <div class="perf-bar"><div class="perf-fill ${cls}" style="width:${Math.min(margin,100)}%;"></div></div>
-                            <button class="btn btn-sm btn-secondary" style="padding:3px 8px;font-size:11px;" onclick="P.showProductDetail(${p.product_id},'${Utils.escapeQuotes(p.product_name)}')">
-                                <i class="fas fa-chart-bar"></i>
-                            </button>
                         </div>
                     </td>
                 </tr>`;
             }).join('');
         } catch(e) {
-            console.error('top products error', e);
+            console.error('loadTop error:', e);
         }
     },
 
-    // ── Product detail modal ──────────────────────────
-    async showProductDetail(id, name) {
-        document.getElementById('prodDetailTitle').innerHTML = `<i class="fas fa-chart-bar"></i> ${Utils.escapeHtml(name)}`;
-        document.getElementById('prodDetailBody').innerHTML = `<div class="pf-empty"><i class="fas fa-spinner fa-spin"></i>Chargement…</div>`;
-        Modal.show('prodDetailModal');
-        try {
-            const d = await API.get(`/api/products/${id}/profit-details`);
-            const margin = d.total_revenue > 0 ? (d.total_profit / d.total_revenue * 100) : 0;
-            let html = `
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;">
-                <div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:12px;padding:16px;text-align:center;">
-                    <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.7px;">Profit total</div>
-                    <div style="font-size:18px;font-weight:700;color:#4ade80;">${this.fmt(d.total_profit)}</div>
-                </div>
-                <div style="background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.2);border-radius:12px;padding:16px;text-align:center;">
-                    <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.7px;">CA généré</div>
-                    <div style="font-size:18px;font-weight:700;color:#60a5fa;">${this.fmt(d.total_revenue)}</div>
-                </div>
-                <div style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:12px;padding:16px;text-align:center;">
-                    <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.7px;">Marge moy.</div>
-                    <div style="font-size:18px;font-weight:700;color:#c084fc;">${margin.toFixed(1)}%</div>
-                </div>
-            </div>
-            <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.7px;font-weight:700;">Historique 30 jours</div>`;
-
-            if (d.history && d.history.length) {
-                html += `<div style="overflow-x:auto;"><table class="pf-tbl"><thead><tr>
-                    <th>Date</th><th class="text-center">Qté</th><th class="text-right">Revenu</th>
-                    <th class="text-right">Profit</th><th class="text-right">Marge</th>
-                </tr></thead><tbody>`;
-                d.history.forEach(h => {
-                    const m = parseFloat(h.revenue) > 0 ? (parseFloat(h.profit) / parseFloat(h.revenue) * 100) : 0;
-                    html += `<tr>
-                        <td>${this.fmtDate(h.date)}</td>
-                        <td class="text-center">${h.quantity}</td>
-                        <td class="text-right">${this.fmt(h.revenue)}</td>
-                        <td class="text-right" style="color:${parseFloat(h.profit)>=0?'#4ade80':'#f87171'};">${this.fmt(h.profit)}</td>
-                        <td class="text-right">${this.margeBadge(m)}</td>
-                    </tr>`;
-                });
-                html += `</tbody></table></div>`;
-            } else {
-                html += `<div class="pf-empty"><i class="fas fa-inbox"></i>Aucune vente sur les 30 derniers jours</div>`;
-            }
-            document.getElementById('prodDetailBody').innerHTML = html;
-        } catch(e) {
-            document.getElementById('prodDetailBody').innerHTML = `<div class="pf-empty"><i class="fas fa-exclamation-triangle"></i>Erreur de chargement</div>`;
-        }
-    },
-
-    // ── Export CSV ───────────────────────────────────
-    async exportCSV() {
+    // ── Export CSV ────────────────────────────────
+    exportCSV() {
         const { params } = this.getParams();
-        try {
-            const url = `/api/export/profits-products?${params}`;
-            window.location.href = url;
-            Toast.success('Export CSV en cours…');
-        } catch(e) { Toast.error('Erreur export CSV'); }
+        window.location.href = `/api/export/profits-products?${params}`;
+        Toast.success('Export CSV en cours…');
     },
 
-    // ── Export PDF ───────────────────────────────────
+    // ── Export PDF ────────────────────────────────
     async exportPDF() {
-        if (typeof window.jspdf === 'undefined') { Toast.error('Bibliothèque PDF non disponible'); return; }
-        Toast.show('Génération PDF…', 'success', 3000);
+        if (typeof window.jspdf === 'undefined') {
+            Toast.error('Bibliothèque PDF non disponible');
+            return;
+        }
+        Toast.show('Génération PDF…', 'success', 4000);
+
         try {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('portrait','mm','a4');
-            const W   = doc.internal.pageSize.width;
-            const M   = 15;
+            const doc  = new jsPDF('portrait', 'mm', 'a4');
+            const W    = doc.internal.pageSize.width;
+            const H    = doc.internal.pageSize.height;
+            const M    = 15;
 
-            // Header
-            doc.setFillColor(37, 99, 235);
+            // Helper: format number for PDF (ASCII space separator)
+            const fmtN = v => {
+                const n = Math.round(parseFloat(v) || 0);
+                return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' Ar';
+            };
+            const fmtD = s => {
+                if (!s) return '';
+                const p = String(s).split('-');
+                if (p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
+                if (p.length === 2) return `${p[1]}/${p[0]}`;
+                return s;
+            };
+            const pctN = v => (parseFloat(v)||0).toFixed(1) + '%';
+
+            let y = 0;
+            const newPageIfNeeded = (need = 30) => {
+                if (y + need > H - 15) { doc.addPage(); y = 20; }
+            };
+
+            // ── Header ──
+            doc.setFillColor(79, 70, 229);
             doc.rect(0, 0, W, 42, 'F');
-            doc.setTextColor(255,255,255);
-            doc.setFontSize(20); doc.setFont('helvetica','bold');
-            doc.text('RAPPORT DES PROFITS', W/2, 18, { align:'center' });
-            doc.setFontSize(10); doc.setFont('helvetica','normal');
-            doc.text('TechFlow POS — Analyse de rentabilité', W/2, 27, { align:'center' });
-            doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`, W/2, 35, { align:'center' });
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(20); doc.setFont('helvetica', 'bold');
+            doc.text('RAPPORT DES PROFITS', W/2, 16, { align: 'center' });
+            doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+            doc.text('TechFlow POS — Analyse de rentabilité', W/2, 24, { align: 'center' });
+            const today = new Date().toLocaleDateString('fr-FR');
+            const period = document.getElementById('fPeriod').options[document.getElementById('fPeriod').selectedIndex].text;
+            doc.text(`Période : ${period} — Généré le ${today}`, W/2, 32, { align: 'center' });
+            y = 50;
 
-            let y = 52;
-
-            // KPIs
-            const kpiProfit  = document.getElementById('kpiProfit')?.textContent || '0 Ar';
+            // ── KPI boxes ──
+            const kpiProfit  = document.getElementById('kpiProfit')?.textContent  || '0 Ar';
             const kpiRevenue = document.getElementById('kpiRevenue')?.textContent || '0 Ar';
-            const kpiCost    = document.getElementById('kpiCost')?.textContent || '0 Ar';
-            const kpiMargin  = document.getElementById('kpiMargin')?.textContent || '0%';
+            const kpiCost    = document.getElementById('kpiCost')?.textContent    || '0 Ar';
+            const kpiMargin  = document.getElementById('kpiMargin')?.textContent?.replace('Marge : ', '') || '0%';
             const kw = (W - M*2) / 4;
-            [[kpiRevenue,'CA'],[kpiProfit,'Profit'],[kpiCost,'Coûts'],[kpiMargin,'Marge']].forEach(([v,l],i) => {
-                const x = M + i*kw;
-                doc.setFillColor(248,250,252); doc.rect(x, y, kw-2, 18, 'F');
-                doc.setTextColor(100,100,100); doc.setFontSize(8); doc.setFont('helvetica','normal');
-                doc.text(l, x+kw/2-1, y+7, {align:'center'});
-                doc.setTextColor(0,0,0); doc.setFontSize(10); doc.setFont('helvetica','bold');
-                doc.text(v.replace(' Ar',''), x+kw/2-1, y+14, {align:'center'});
+            [[kpiRevenue,'CA Total'],[kpiProfit,'Profit Net'],[kpiCost,'Coûts'],[kpiMargin,'Marge Moy.']].forEach(([v, l], i) => {
+                const x = M + i * kw;
+                doc.setFillColor(248, 249, 252); doc.rect(x, y, kw-2, 20, 'F');
+                doc.setTextColor(100, 100, 100); doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+                doc.text(l, x + (kw-2)/2, y + 7, { align: 'center' });
+                doc.setTextColor(0, 0, 0); doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+                // Remove Ar suffix for box (already in label)
+                doc.text(v.replace(' Ar','').trim(), x + (kw-2)/2, y + 15, { align: 'center' });
             });
-            y += 26;
+            y += 28;
 
-            // Top produits
-            const rows = [];
-            document.querySelectorAll('#topTbody tr').forEach((tr,i) => {
+            // ── Daily profits table ──
+            if (this._daily.length > 0) {
+                newPageIfNeeded(50);
+                doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(0,0,0);
+                doc.text('PROFITS JOURNALIERS PAR PRODUIT', W/2, y, { align: 'center' });
+                y += 8;
+
+                const rows = [];
+                this._daily.forEach(day => {
+                    const dayRev    = parseFloat(day.totalRevenue) || 0;
+                    const dayCost   = parseFloat(day.totalCost)    || 0;
+                    const dayProfit = parseFloat(day.totalProfit)  || 0;
+                    const dayMargin = dayRev > 0 ? (dayProfit/dayRev*100).toFixed(1) : '0.0';
+                    // Day summary row
+                    rows.push({
+                        type: 'day',
+                        data: [fmtD(day.date), `${day.products?.length||0} article(s)`, '', fmtN(dayRev), fmtN(dayCost), fmtN(dayProfit), dayMargin+'%']
+                    });
+                    // Product rows
+                    if (day.products && day.products.length) {
+                        day.products.forEach(pr => {
+                            const rev    = parseFloat(pr.total_revenue) || 0;
+                            const cost   = parseFloat(pr.total_cost)    || 0;
+                            const profit = parseFloat(pr.total_profit)  || 0;
+                            const qty    = parseInt(pr.total_quantity)  || 0;
+                            const margin = rev > 0 ? (profit/rev*100).toFixed(1) : '0.0';
+                            rows.push({
+                                type: 'product',
+                                data: ['  ' + (pr.product_name||'').substring(0,28), qty.toString(), '', fmtN(rev), fmtN(cost), fmtN(profit), margin+'%']
+                            });
+                        });
+                    }
+                });
+
+                doc.autoTable({
+                    startY: y,
+                    head: [['Date / Produit', 'Qté', '', 'Revenus', 'Coûts', 'Profit', 'Marge']],
+                    body: rows.map(r => r.data),
+                    margin: { left: M, right: M },
+                    styles: { fontSize: 7.5, cellPadding: 3, valign: 'middle', lineWidth: 0 },
+                    headStyles: { fillColor: [79,70,229], textColor: 255, fontStyle: 'bold', fontSize: 8, lineWidth: 0 },
+                    columnStyles: {
+                        0: { cellWidth: 50, halign: 'left' },
+                        1: { cellWidth: 14, halign: 'center' },
+                        2: { cellWidth: 5 },
+                        3: { cellWidth: 32, halign: 'right' },
+                        4: { cellWidth: 32, halign: 'right' },
+                        5: { cellWidth: 32, halign: 'right' },
+                        6: { cellWidth: 16, halign: 'center' }
+                    },
+                    didParseCell: data => {
+                        if (data.section === 'body') {
+                            const row = rows[data.row.index];
+                            if (row && row.type === 'day') {
+                                data.cell.styles.fillColor     = [240, 242, 255];
+                                data.cell.styles.textColor     = [30, 30, 80];
+                                data.cell.styles.fontStyle     = 'bold';
+                                data.cell.styles.fontSize      = 8;
+                            } else {
+                                data.cell.styles.fillColor     = data.row.index % 2 === 0 ? [255,255,255] : [250,250,252];
+                                data.cell.styles.textColor     = [50,50,50];
+                            }
+                        }
+                    },
+                    theme: 'plain',
+                    didDrawPage: d => { y = d.cursor.y; }
+                });
+                y += 10;
+            }
+
+            // ── Top products ──
+            const topRows = [];
+            document.querySelectorAll('#topBody tr').forEach((tr, i) => {
                 const cells = tr.querySelectorAll('td');
                 if (cells.length >= 6) {
-                    rows.push([
+                    topRows.push([
                         cells[0].textContent.trim(),
-                        cells[1].textContent.trim().substring(0,30),
+                        cells[1].textContent.trim().substring(0, 30),
                         cells[2].textContent.trim(),
                         cells[3].textContent.trim(),
                         cells[4].textContent.trim(),
@@ -920,81 +774,75 @@ const P = {
                     ]);
                 }
             });
-            if (rows.length) {
-                doc.setFontSize(12); doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
-                doc.text('TOP PRODUITS LES PLUS RENTABLES', W/2, y, {align:'center'});
-                y += 6;
+
+            if (topRows.length) {
+                newPageIfNeeded(50);
+                doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(0,0,0);
+                doc.text('TOP PRODUITS LES PLUS RENTABLES', W/2, y, { align: 'center' });
+                y += 8;
                 doc.autoTable({
-                    startY: y, head: [['#','Produit','Qté','Revenus','Profit','Marge']],
-                    body: rows, margin: {left:M, right:M},
-                    headStyles: {fillColor:[37,99,235], textColor:255, fontStyle:'bold', fontSize:9},
-                    styles: {fontSize:8, cellPadding:3},
-                    alternateRowStyles: {fillColor:[248,250,252]},
-                    columnStyles: {0:{cellWidth:10,halign:'center'},1:{cellWidth:60,halign:'left'},2:{cellWidth:20,halign:'center'},3:{cellWidth:30,halign:'right'},4:{cellWidth:30,halign:'right'},5:{cellWidth:20,halign:'center'}},
+                    startY: y,
+                    head: [['#', 'Produit', 'Ventes', 'Revenus', 'Profit', 'Marge']],
+                    body: topRows,
+                    margin: { left: M, right: M },
+                    styles: { fontSize: 8, cellPadding: 3, lineWidth: 0 },
+                    headStyles: { fillColor: [16,185,129], textColor: 255, fontStyle: 'bold', lineWidth: 0 },
+                    alternateRowStyles: { fillColor: [248,250,252] },
+                    columnStyles: {
+                        0: { cellWidth: 10, halign: 'center' },
+                        1: { cellWidth: 65, halign: 'left' },
+                        2: { cellWidth: 18, halign: 'center' },
+                        3: { cellWidth: 30, halign: 'right' },
+                        4: { cellWidth: 30, halign: 'right' },
+                        5: { cellWidth: 18, halign: 'center' }
+                    },
+                    theme: 'plain',
                     didDrawPage: d => { y = d.cursor.y; }
                 });
-                y += 8;
             }
 
-            // Journal journalier
-            const dailyRows = [];
-            this._daily.forEach(d => {
-                const rev = parseFloat(d.totalRevenue)||0, cost=parseFloat(d.totalCost)||0, profit=parseFloat(d.totalProfit)||0;
-                const m   = rev > 0 ? (profit/rev*100).toFixed(1)+'%' : '0%';
-                dailyRows.push([this.fmtDate(d.date), this.fmtPdf(rev).replace(' Ar',''), this.fmtPdf(cost).replace(' Ar',''), this.fmtPdf(profit).replace(' Ar',''), m]);
-            });
-            if (dailyRows.length) {
-                const pageH = doc.internal.pageSize.height;
-                if (y > pageH - 50) { doc.addPage(); y = 20; }
-                doc.setFontSize(12); doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
-                doc.text('DÉTAIL JOURNALIER', W/2, y, {align:'center'});
-                y += 6;
-                doc.autoTable({
-                    startY: y, head: [['Date','Revenus (Ar)','Coûts (Ar)','Profit (Ar)','Marge']],
-                    body: dailyRows, margin: {left:M, right:M},
-                    headStyles: {fillColor:[16,185,129], textColor:255, fontStyle:'bold', fontSize:9},
-                    styles: {fontSize:8, cellPadding:3},
-                    alternateRowStyles: {fillColor:[248,250,252]},
-                    columnStyles: {0:{cellWidth:35,halign:'center'},1:{cellWidth:38,halign:'right'},2:{cellWidth:38,halign:'right'},3:{cellWidth:38,halign:'right'},4:{cellWidth:22,halign:'center'}}
-                });
-            }
-
-            // Footer
+            // ── Footer on all pages ──
             const total = doc.internal.getNumberOfPages();
-            for (let i=1;i<=total;i++) {
+            for (let i = 1; i <= total; i++) {
                 doc.setPage(i);
-                doc.setFontSize(7); doc.setTextColor(150,150,150); doc.setFont('helvetica','normal');
-                doc.text('TechFlow POS — Document généré automatiquement', M, doc.internal.pageSize.height-8);
-                doc.text(`Page ${i}/${total}`, W-M, doc.internal.pageSize.height-8, {align:'right'});
+                doc.setFontSize(6.5); doc.setTextColor(150,150,150); doc.setFont('helvetica', 'normal');
+                doc.text('TechFlow POS — Document généré automatiquement', M, H - 8);
+                doc.text(`Page ${i} / ${total}`, W/2, H - 8, { align: 'center' });
+                doc.text(new Date().toLocaleString('fr-FR'), W - M, H - 8, { align: 'right' });
             }
 
-            const today = new Date().toISOString().split('T')[0].replace(/-/g,'');
-            doc.save(`Profits_TechFlow_${today}.pdf`);
+            const dateStr = new Date().toISOString().split('T')[0].replace(/-/g,'');
+            doc.save(`Rapport_Profits_${dateStr}.pdf`);
             Toast.success('PDF généré !');
+
         } catch(e) {
-            console.error('PDF error', e);
-            Toast.error('Erreur génération PDF');
+            console.error('PDF error:', e);
+            Toast.error('Erreur génération PDF : ' + e.message);
         }
     },
 
-    // ── Init ─────────────────────────────────────────
     async init() {
-        // Dates par défaut
         const today = new Date().toISOString().split('T')[0];
         const m30   = new Date(Date.now() - 30*86400000).toISOString().split('T')[0];
         document.getElementById('fStart').value = m30;
         document.getElementById('fEnd').value   = today;
-
         await this.load();
     }
 };
 
-// ── Bootstrap ──────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
     const ok = await Auth.checkSession();
     if (!ok) { window.location.href = '/login.html'; return; }
     if (!Auth.isAdmin()) { window.location.href = '/pos.html'; return; }
     updateUIForRole();
+    const u = Auth.getUser();
+    if (u) {
+        const el = document.getElementById('userAvatar');
+        if (el) el.textContent = Utils.getInitials(u.full_name || u.username);
+        const nm = document.getElementById('userName');
+        if (nm) nm.textContent = u.full_name || u.username;
+    }
     await P.init();
 });
 </script>

@@ -765,8 +765,7 @@ function patchCard(p, old) {
     const badge = card.querySelector('.stock-badge');
     if (badge) {
         badge.className = 'stock-badge';
-        if (p.product_type === 'service') { badge.style.background='rgba(124,58,237,0.85)'; badge.style.color='#fff'; badge.textContent='Service'; }
-        else if (p.quantity <= 0) { badge.classList.add('out'); badge.textContent = 'Rupture'; }
+        if (p.quantity <= 0)      { badge.classList.add('out'); badge.textContent = 'Rupture'; }
         else if (p.quantity <= min) { badge.classList.add('low'); badge.textContent = 'Stock faible'; }
         else                      { badge.classList.add('ok');  badge.textContent = 'Dispo'; }
     }
@@ -806,9 +805,8 @@ function patchCard(p, old) {
     }
 
     // Classes de la carte
-    const isSvcT = p.product_type === 'service';
-    card.classList.toggle('out-of-stock',       !isSvcT && p.quantity <= 0);
-    card.classList.toggle('out-of-stock-card',  !isSvcT && p.quantity <= 0);
+    card.classList.toggle('out-of-stock',       p.quantity <= 0);
+    card.classList.toggle('out-of-stock-card',  p.quantity <= 0);
     card.classList.toggle('low-stock',          p.quantity > 0 && p.quantity <= min);
 
     // Si le produit ne passe plus le filtre actif → re-render complet
@@ -1011,12 +1009,8 @@ function renderProducts() {
 
     grid.innerHTML = filtered.map((p, i) => {
         const min = p.min_stock || 5;
-        const isSvc = p.product_type === 'service';
         let stockBadge, stockClass, stockLabel, cardExtraClass = '';
-        if (isSvc) {
-            stockBadge = `<span class="stock-badge" style="background:rgba(124,58,237,0.85);color:#fff;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;">Service</span>`;
-            stockClass = ''; stockLabel = 'Service';
-        } else if (p.quantity <= 0) {
+        if (p.quantity <= 0) {
             stockBadge = `<span class="stock-badge out">Rupture</span>`;
             stockClass = 'out'; stockLabel = 'Rupture'; cardExtraClass = 'out-of-stock-card';
         } else if (p.quantity <= min) {
@@ -1031,7 +1025,7 @@ function renderProducts() {
             : `<i class="fas fa-box no-img-icon"></i>`;
 
         return `
-            <div class="product-card ${(!isSvc && p.quantity <= 0) ? 'out-of-stock' : ''} ${cardExtraClass}"
+            <div class="product-card ${p.quantity <= 0 ? 'out-of-stock' : ''} ${cardExtraClass}"
                  data-id="${p.id}"
                  style="animation-delay:${Math.min(i*0.02,0.4)}s"
                  onclick="openModal(${p.id})">

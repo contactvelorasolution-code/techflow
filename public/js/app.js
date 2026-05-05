@@ -67,10 +67,8 @@ const Utils = {
     // Format currency in Ariary
     formatCurrency(amount, currency = 'Ar') {
         if (amount === null || amount === undefined) amount = 0;
-        // Use space as thousand separator (e.g. 1 250 000 Ar)
         const n = Math.round(amount);
-        const formatted = n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f');
-        return formatted + ' ' + currency;
+        return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0') + '\u00a0' + currency;
     },
     
     // Format date - SANS conversion timezone
@@ -615,7 +613,6 @@ const Cart = {
     add(product) {
         const isSvc = product.product_type === 'service';
         const existing = this.items.find(item => item.id === product.id);
-
         if (existing) {
             if (isSvc || existing.quantity < product.quantity) {
                 existing.quantity++;
@@ -626,12 +623,10 @@ const Cart = {
         } else {
             if (isSvc || product.quantity > 0) {
                 this.items.push({
-                    id:           product.id,
-                    name:         product.name,
-                    price:        product.sale_price,
-                    quantity:     1,
-                    maxStock:     isSvc ? 999999 : product.quantity,
-                    image:        product.image,
+                    id: product.id, name: product.name,
+                    price: product.sale_price, quantity: 1,
+                    maxStock: isSvc ? 999999 : product.quantity,
+                    image: product.image,
                     product_type: product.product_type || 'product'
                 });
             } else {
@@ -639,7 +634,6 @@ const Cart = {
                 return;
             }
         }
-
         this.render();
         Toast.success(isSvc ? `${product.name} ajouté` : 'Produit ajouté');
     },
@@ -649,14 +643,9 @@ const Cart = {
         if (item) {
             const isSvc = item.product_type === 'service';
             const newQty = item.quantity + change;
-            if (newQty <= 0) {
-                this.remove(productId);
-                return;
-            } else if (isSvc || newQty <= item.maxStock) {
-                item.quantity = newQty;
-            } else {
-                Toast.warning('Stock insuffisant');
-            }
+            if (newQty <= 0) { this.remove(productId); return; }
+            else if (isSvc || newQty <= item.maxStock) { item.quantity = newQty; }
+            else { Toast.warning('Stock insuffisant'); }
         }
         this.render();
     },
@@ -711,13 +700,13 @@ const Cart = {
         } else {
             cartItems.innerHTML = this.items.map(item => {
                 const isSvc = item.product_type === 'service';
-                const iconClass = isSvc ? 'fa-concierge-bell' : 'fa-box';
-                const svcBadge = isSvc ? '<span style="font-size:9px;background:rgba(168,85,247,0.2);color:#c084fc;padding:1px 5px;border-radius:4px;margin-left:4px;font-weight:700;">SVC</span>' : '';
-                const borderStyle = isSvc ? 'border-left:2px solid rgba(168,85,247,0.5);' : '';
+                const svcBadge = isSvc ? '<span style="font-size:9px;background:rgba(139,92,246,.2);color:#8b5cf6;padding:1px 5px;border-radius:4px;margin-left:4px;font-weight:700;">SVC</span>' : '';
+                const borderL  = isSvc ? 'border-left:2px solid rgba(139,92,246,.5);' : '';
+                const icon     = isSvc ? 'fa-concierge-bell' : 'fa-box';
                 return `
-                <div class="pos-cart-item" style="${borderStyle}">
-                    <div class="pos-cart-item-image" style="${isSvc ? 'background:rgba(124,58,237,0.1);' : ''}">
-                        ${item.image ? `<img src="${item.image}" alt="">` : `<i class="fas ${iconClass}" style="${isSvc ? 'color:#a78bfa;' : ''}"></i>`}
+                <div class="pos-cart-item" style="${borderL}">
+                    <div class="pos-cart-item-image">
+                        ${item.image ? `<img src="${item.image}" alt="">` : `<i class="fas ${icon}" style="${isSvc?'color:#8b5cf6;':''}"></i>`}
                     </div>
                     <div class="pos-cart-item-info">
                         <div class="pos-cart-item-name">${item.name}${svcBadge}</div>
@@ -2177,20 +2166,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 function updateUIForRole() {
     const user = Auth.getUser();
     if (!user) return;
-
+    
     const userAvatar = document.querySelector('.user-avatar');
     const userDetails = document.querySelector('.user-details');
-
+    
     if (userAvatar) {
         userAvatar.textContent = Utils.getInitials(user.full_name || user.username);
     }
+    
     if (userDetails) {
         userDetails.innerHTML = `
             <h4>${user.full_name || user.username}</h4>
             <span>${user.role === 'admin' ? 'Administrateur' : 'Caissier'}</span>
         `;
     }
-
+    
     if (user.role === 'admin') {
         document.querySelectorAll('.admin-only').forEach(el => { el.style.display = ''; });
         document.querySelectorAll('.caissier-only').forEach(el => { el.style.display = 'none'; });
@@ -2284,20 +2274,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 function updateUIForRole() {
     const user = Auth.getUser();
     if (!user) return;
-
+    
     const userAvatar = document.querySelector('.user-avatar');
     const userDetails = document.querySelector('.user-details');
-
+    
     if (userAvatar) {
         userAvatar.textContent = Utils.getInitials(user.full_name || user.username);
     }
+    
     if (userDetails) {
         userDetails.innerHTML = `
             <h4>${user.full_name || user.username}</h4>
             <span>${user.role === 'admin' ? 'Administrateur' : 'Caissier'}</span>
         `;
     }
-
+    
     if (user.role === 'admin') {
         document.querySelectorAll('.admin-only').forEach(el => { el.style.display = ''; });
         document.querySelectorAll('.caissier-only').forEach(el => { el.style.display = 'none'; });
