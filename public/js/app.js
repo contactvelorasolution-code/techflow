@@ -867,22 +867,26 @@ const Inventory = {
     
     async loadStats() {
         if (!Auth.isAdmin()) return;
-        
         try {
-            const stats = await API.get('/api/inventory/stats');
-            
-            if (document.getElementById('totalStockValue')) {
-                document.getElementById('totalStockValue').textContent = Utils.formatCurrency(stats.totalStockValue);
-            }
-            if (document.getElementById('totalPurchaseValue')) {
-                document.getElementById('totalPurchaseValue').textContent = Utils.formatCurrency(stats.totalPurchaseValue);
-            }
-            if (document.getElementById('totalPotentialProfit')) {
-                document.getElementById('totalPotentialProfit').textContent = Utils.formatCurrency(stats.totalPotentialProfit);
-            }
-            if (document.getElementById('totalProducts')) {
-                document.getElementById('totalProducts').textContent = stats.totalProducts;
-            }
+            // Compute stats from already-loaded products (exclude services)
+            const products = this.products;
+            let totalStockValue = 0, totalPurchaseValue = 0, totalPotentialProfit = 0;
+            let totalProducts = 0, outCount = 0, lowCount = 0, svcCount = 0;
+            products.forEach(p => {
+                if (p.product_type === 'service') { svcCount++; return; }
+                totalProducts++;
+                totalStockValue     += (p.sale_price    || 0) * (p.quantity || 0);
+                totalPurchaseValue  += (p.purchase_price || 0) * (p.quantity || 0);
+                totalPotentialProfit+= ((p.sale_price||0) - (p.purchase_price||0)) * (p.quantity||0);
+                if (p.quantity <= 0) outCount++;
+                else if (p.quantity <= (p.min_stock||5)) lowCount++;
+            });
+            const safe = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+            safe('totalStockValue',      Utils.formatCurrency(totalStockValue));
+            safe('totalPurchaseValue',   Utils.formatCurrency(totalPurchaseValue));
+            safe('totalPotentialProfit', Utils.formatCurrency(totalPotentialProfit));
+            safe('totalProducts',        totalProducts);
+            safe('lowStockCount',        `${outCount} rupture(s), ${lowCount} faible(s), ${svcCount} service(s)`);
         } catch (error) {
             console.error('Stats error:', error);
         }
@@ -891,88 +895,112 @@ const Inventory = {
     render() {
         const tbody = document.getElementById('inventoryTableBody');
         if (!tbody) return;
-        
         const isAdmin = Auth.isAdmin();
-        
+
         tbody.innerHTML = this.products.map(product => {
-            let stockClass = 'in-stock';
-            let stockText = 'En stock';
-            
-            if (product.quantity <= 0) {
-                stockClass = 'out-of-stock';
-                stockText = 'Rupture';
+            const isSvc = product.product_type === 'service';
+            let stockClass = 'in-stock', stockText = 'En stock';
+            if (isSvc) {
+                stockClass = ''; stockText = 'Service';
+            } else if (product.quantity <= 0) {
+                stockClass = 'out-of-stock'; stockText = 'Rupture';
             } else if (product.quantity <= (product.min_stock || 5)) {
-                stockClass = 'low-stock';
-                stockText = 'Stock faible';
+                stockClass = 'low-stock'; stockText = 'Stock faible';
             }
-            
+            const rowStyle   = isSvc ? 'border-left:2px solid rgba(139,92,246,.4);' : '';
+            const svcBadgeStyle = isSvc ? 'background:rgba(139,92,246,.15);color:#8b5cf6;border:1px solid rgba(139,92,246,.3);' : '';
+            const icon       = isSvc ? 'fa-concierge-bell' : 'fa-box';
+            const iconColor  = isSvc ? 'color:#8b5cf6;' : '';
+            const qtyDisplay = isSvc ? '<span style="color:#6b7280;font-size:12px;">—</span>' : `<strong>${product.quantity}</strong>`;
+            const marginDisp = isSvc ? '<span style="color:#6b7280;">—</span>' : Utils.formatCurrency((product.sale_price - (product.purchase_price||0)) * product.quantity);
+            const purchDisp  = isSvc ? '<span style="color:#6b7280;">—</span>' : Utils.formatCurrency(product.purchase_price||0);
+
             return `
-                <tr>
+                <tr style="${rowStyle}">
                     <td>
                         <div class="product-cell">
-                            ${product.image 
-                                ? `<img src="${product.image}" alt="">` 
-                                : '<div class="product-placeholder"><i class="fas fa-box"></i></div>'}
+                            ${product.image
+                                ? `<img src="${product.image}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px;">`
+                                : `<div class="product-placeholder" style="${isSvc?'background:rgba(139,92,246,.15);':''}"><i class="fas ${icon}" style="${iconColor}"></i></div>`}
                             <div>
                                 <strong>${product.name}</strong>
+                                ${isSvc ? '<span style="font-size:10px;background:rgba(139,92,246,.2);color:#8b5cf6;padding:1px 6px;border-radius:4px;margin-left:4px;font-weight:700;">SERVICE</span>' : ''}
                                 <br><small class="text-muted">${product.category || 'Sans catégorie'}</small>
                             </div>
                         </div>
                     </td>
-                    <td>${product.barcode || '-'}</td>
-                    ${isAdmin ? `<td class="text-right">${Utils.formatCurrency(product.purchase_price || 0)}</td>` : ''}
+                    <td>${product.barcode || '—'}</td>
+                    ${isAdmin ? `<td class="text-right">${purchDisp}</td>` : ''}
                     <td class="text-right">${Utils.formatCurrency(product.sale_price)}</td>
-                    <td class="text-center"><strong>${product.quantity}</strong></td>
-                    <td><span class="stock-badge ${stockClass}">${stockText}</span></td>
-                    ${isAdmin ? `<td class="text-right">${Utils.formatCurrency((product.sale_price - (product.purchase_price || 0)) * product.quantity)}</td>` : ''}
+                    <td class="text-center">${qtyDisplay}</td>
+                    <td><span class="stock-badge ${stockClass}" style="${svcBadgeStyle}">${stockText}</span></td>
+                    ${isAdmin ? `<td class="text-right">${marginDisp}</td>` : ''}
                     <td class="actions-cell">
-                        <button class="btn btn-sm btn-success" onclick="Inventory.quickAddStock(${product.id}, '${product.name.replace(/'/g, "\\'")}', ${product.quantity})" title="Réapprovisionner">
-                            <i class="fas fa-plus"></i>
-                        </button>
+                        ${!isSvc ? `<button class="btn btn-sm btn-success" onclick="Inventory.quickAddStock(${product.id}, '${product.name.replace(/'/g, "\'")}', ${product.quantity})" title="Réapprovisionner"><i class="fas fa-plus"></i></button>` : ''}
                         ${isAdmin ? `
-                        <button class="btn btn-sm btn-primary" onclick="Inventory.edit(${product.id})" title="Modifier">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="Inventory.delete(${product.id})" title="Supprimer">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="Inventory.edit(${product.id})" title="Modifier"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="Inventory.delete(${product.id})" title="Supprimer"><i class="fas fa-trash"></i></button>
                         ` : ''}
                     </td>
                 </tr>
             `;
         }).join('');
-    },
+    },,
     
-    showAddModal() {
+    showAddModal(type = 'product') {
         document.getElementById('productForm').reset();
         document.getElementById('productId').value = '';
-        document.getElementById('productModalTitle').textContent = 'Nouveau Produit';
         document.getElementById('imagePreview').innerHTML = '';
+        Inventory.setType(type);
         Modal.show('productModal');
         document.getElementById('productName').focus();
+    },
+
+    setType(type) {
+        const isService = type === 'service';
+        // Update hidden field
+        const ptField = document.getElementById('productType');
+        if (ptField) ptField.value = type;
+        // Toggle buttons
+        const btnProd = document.getElementById('typeBtnProduct');
+        const btnSvc  = document.getElementById('typeBtnService');
+        if (btnProd) btnProd.classList.toggle('active', !isService);
+        if (btnSvc)  btnSvc.classList.toggle('active', isService);
+        // Toggle stock fields visibility
+        const stockFields = document.getElementById('stockFields');
+        if (stockFields) stockFields.style.display = isService ? 'none' : '';
+        // Update modal title
+        const title = document.getElementById('productModalTitle');
+        if (title) title.textContent = isService ? 'Nouveau Service' : 'Nouveau Produit';
+        // Update name label
+        const nameLabel = document.getElementById('nameLabel');
+        if (nameLabel) nameLabel.textContent = isService ? 'Nom du service *' : 'Nom du produit *';
     },
     
     async edit(id) {
         try {
             const product = await API.get(`/api/products/${id}`);
-            
+            const type = product.product_type || 'product';
+
             document.getElementById('productId').value = product.id;
             document.getElementById('productName').value = product.name;
             document.getElementById('productCategory').value = product.category || '';
-            document.getElementById('productPurchasePrice').value = product.purchase_price || 0;
+            if (document.getElementById('productPurchasePrice'))
+                document.getElementById('productPurchasePrice').value = product.purchase_price || 0;
             document.getElementById('productSalePrice').value = product.sale_price;
             document.getElementById('productQuantity').value = product.quantity;
             document.getElementById('productMinStock').value = product.min_stock || 5;
             document.getElementById('productBarcode').value = product.barcode || '';
-            
-            document.getElementById('productModalTitle').textContent = 'Modifier Produit';
-            
+
+            Inventory.setType(type);
+            const title = document.getElementById('productModalTitle');
+            if (title) title.textContent = type === 'service' ? 'Modifier Service' : 'Modifier Produit';
+
             if (product.image) {
                 document.getElementById('imagePreview').innerHTML = `<img src="${product.image}" style="max-width:100px;border-radius:8px;">`;
             } else {
                 document.getElementById('imagePreview').innerHTML = '';
             }
-            
             Modal.show('productModal');
         } catch (error) {
             Toast.error('Erreur lors du chargement');

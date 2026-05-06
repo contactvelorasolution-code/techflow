@@ -221,57 +221,87 @@
             <div class="modal-body">
                 <form id="productForm" enctype="multipart/form-data">
                     <input type="hidden" id="productId" name="id">
-                    
+                    <input type="hidden" id="productType" name="product_type" value="product">
+
+                    <!-- Toggle Produit / Service -->
+                    <div style="display:flex;gap:8px;margin-bottom:18px;">
+                        <button type="button" id="typeBtnProduct" class="active"
+                            onclick="Inventory.setType('product')"
+                            style="flex:1;padding:10px;border:2px solid var(--accent);border-radius:8px;background:rgba(var(--accent-rgb),.15);color:var(--accent);font-weight:700;font-size:12px;cursor:pointer;transition:.2s;letter-spacing:.5px;text-transform:uppercase;">
+                            <i class="fas fa-box"></i>&nbsp; Produit physique
+                        </button>
+                        <button type="button" id="typeBtnService"
+                            onclick="Inventory.setType('service')"
+                            style="flex:1;padding:10px;border:2px solid var(--border-color);border-radius:8px;background:var(--bg-input);color:var(--text-muted);font-weight:700;font-size:12px;cursor:pointer;transition:.2s;letter-spacing:.5px;text-transform:uppercase;">
+                            <i class="fas fa-concierge-bell"></i>&nbsp; Service / Prestation
+                        </button>
+                    </div>
+
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="productName">Nom du produit *</label>
-                            <input type="text" id="productName" name="name" class="form-control" required>
+                            <label id="nameLabel" for="productName">Nom du produit *</label>
+                            <input type="text" id="productName" name="name" class="form-control" required placeholder="Ex: Maintenance, Écran 24''...">
                         </div>
                         <div class="form-group">
                             <label for="productCategory">Catégorie</label>
-                            <input type="text" id="productCategory" name="category" class="form-control" list="categoryList">
+                            <input type="text" id="productCategory" name="category" class="form-control" list="categoryList" placeholder="Ex: Électronique, Maintenance...">
                             <datalist id="categoryList"></datalist>
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group admin-only">
-                            <label for="productPurchasePrice">Prix d'achat (Ar)</label>
-                            <input type="number" id="productPurchasePrice" name="purchase_price" class="form-control" min="0">
+                            <label for="productPurchasePrice">Prix d'achat / coût (Ar)</label>
+                            <input type="number" id="productPurchasePrice" name="purchase_price" class="form-control" min="0" value="0">
                         </div>
                         <div class="form-group">
                             <label for="productSalePrice">Prix de vente (Ar) *</label>
                             <input type="number" id="productSalePrice" name="sale_price" class="form-control" required min="0">
                         </div>
                     </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="productQuantity">Quantité</label>
-                            <input type="number" id="productQuantity" name="quantity" class="form-control" value="0" min="0">
+
+                    <!-- Champs stock (masqués pour les services) -->
+                    <div id="stockFields">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="productQuantity">Quantité initiale</label>
+                                <input type="number" id="productQuantity" name="quantity" class="form-control" value="0" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="productMinStock">Stock minimum (alerte)</label>
+                                <input type="number" id="productMinStock" name="min_stock" class="form-control" value="5" min="0">
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="productMinStock">Stock minimum</label>
-                            <input type="number" id="productMinStock" name="min_stock" class="form-control" value="5" min="0">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="productBarcode">Code-barre</label>
+                                <input type="text" id="productBarcode" name="barcode" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label for="productImage">Image</label>
+                                <input type="file" id="productImage" name="image" class="form-control" accept="image/*">
+                                <div id="imagePreview" class="mt-2"></div>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="productBarcode">Code-barre</label>
-                            <input type="text" id="productBarcode" name="barcode" class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <label for="productImage">Image</label>
-                            <input type="file" id="productImage" name="image" class="form-control" accept="image/*">
-                            <div id="imagePreview" class="mt-2"></div>
+
+                    <!-- Info service -->
+                    <div id="serviceInfo" style="display:none;background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);border-radius:8px;padding:12px;margin-top:4px;">
+                        <p style="margin:0;font-size:12px;color:#8b5cf6;">
+                            <i class="fas fa-info-circle"></i>
+                            Les <strong>services</strong> n'ont pas de stock — ils peuvent être ajoutés au panier sans limite.
+                            Ex : Maintenance, Transport, Installation, Emballage...
+                        </p>
+                        <div class="form-group" style="margin-top:10px;margin-bottom:0;">
+                            <label for="productImageSvc">Image / icône (optionnel)</label>
+                            <input type="file" id="productImageSvc" name="image" class="form-control" accept="image/*" disabled>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="Modal.hide('productModal')">Annuler</button>
-                <button class="btn btn-primary" onclick="Inventory.save()">
+                <button class="btn btn-primary" id="saveProdBtn" onclick="Inventory.save()">
                     <i class="fas fa-save"></i> Enregistrer
                 </button>
             </div>
@@ -688,5 +718,46 @@
             });
         }
     </script>
+
+<script>
+// Inventory.setType — toggle produit/service dans le modal
+document.addEventListener('DOMContentLoaded', function() {
+    // Override setType after Inventory is initialized
+    var _origSet = Inventory.setType ? Inventory.setType.bind(Inventory) : null;
+    Inventory.setType = function(type) {
+        if (_origSet) _origSet(type);
+        var isService = type === 'service';
+        var ptField = document.getElementById('productType');
+        if (ptField) ptField.value = type;
+
+        var btnP = document.getElementById('typeBtnProduct');
+        var btnS = document.getElementById('typeBtnService');
+        if (btnP) {
+            btnP.style.border     = isService ? '2px solid var(--border-color)' : '2px solid var(--accent)';
+            btnP.style.background = isService ? 'var(--bg-input)'               : 'rgba(37,99,235,.15)';
+            btnP.style.color      = isService ? 'var(--text-muted)'             : 'var(--accent)';
+        }
+        if (btnS) {
+            btnS.style.border     = isService ? '2px solid #8b5cf6'              : '2px solid var(--border-color)';
+            btnS.style.background = isService ? 'rgba(139,92,246,.15)'           : 'var(--bg-input)';
+            btnS.style.color      = isService ? '#8b5cf6'                        : 'var(--text-muted)';
+        }
+
+        var sf  = document.getElementById('stockFields');
+        var si  = document.getElementById('serviceInfo');
+        var iS  = document.getElementById('productImageSvc');
+        if (sf) sf.style.display = isService ? 'none' : '';
+        if (si) si.style.display = isService ? ''     : 'none';
+        if (iS) iS.disabled      = !isService;
+
+        var title = document.getElementById('productModalTitle');
+        var lbl   = document.getElementById('nameLabel');
+        var btn   = document.getElementById('saveProdBtn');
+        if (title) title.textContent = isService ? 'Nouveau Service'  : 'Nouveau Produit';
+        if (lbl)   lbl.textContent   = isService ? 'Nom du service *' : 'Nom du produit *';
+        if (btn)   btn.style.background = isService ? 'linear-gradient(135deg,#7c3aed,#a855f7)' : '';
+    };
+});
+</script>
 </body>
 </html>

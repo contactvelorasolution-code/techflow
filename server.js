@@ -940,7 +940,7 @@ app.get('/api/dashboard/stats', requireAuth, requireAdmin, (req, res) => {
                     stats.monthRevenue = monthData.revenue;
 
                     db.get(
-                        "SELECT COUNT(*) as count FROM products WHERE quantity <= min_stock",
+                        "SELECT COUNT(*) as count FROM products WHERE quantity <= min_stock AND (product_type IS NULL OR product_type != 'service')",
                         [],
                         (err, critical) => {
                             if (err) return res.status(500).json({ error: err.message });
