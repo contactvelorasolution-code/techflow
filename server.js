@@ -127,9 +127,12 @@ db.serialize(() => {
         min_stock      INTEGER DEFAULT 5,
         image          TEXT,
         barcode        TEXT,
+        product_type   TEXT    DEFAULT 'product',
         created_at     TEXT,
         updated_at     TEXT
     )`);
+    // Migration: ajoute product_type si absente (DB existante)
+    db.run("ALTER TABLE products ADD COLUMN product_type TEXT DEFAULT 'product'", () => {});
 
     db.run(`CREATE TABLE IF NOT EXISTS clients (
         id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -413,7 +416,7 @@ app.delete('/api/users/:id', requireAuth, requireAdmin, (req, res) => {
 app.get('/api/products', requireAuth, (req, res) => {
     const fields = req.session.user.role === 'admin'
         ? '*'
-        : 'id, name, category, sale_price, quantity, min_stock, image, barcode';
+        : 'id, name, category, sale_price, quantity, min_stock, image, barcode, product_type';
 
     db.all(`SELECT ${fields} FROM products ORDER BY name`, [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -424,7 +427,7 @@ app.get('/api/products', requireAuth, (req, res) => {
 app.get('/api/products/:id', requireAuth, (req, res) => {
     const fields = req.session.user.role === 'admin'
         ? '*'
-        : 'id, name, category, sale_price, quantity, min_stock, image, barcode';
+        : 'id, name, category, sale_price, quantity, min_stock, image, barcode, product_type';
 
     db.get(`SELECT ${fields} FROM products WHERE id = ?`, [req.params.id], (err, row) => {
         if (err)  return res.status(500).json({ error: err.message });
@@ -435,32 +438,36 @@ app.get('/api/products/:id', requireAuth, (req, res) => {
 
 // ── POST /api/products — Création ───────────────────────────
 app.post('/api/products', requireAuth, requireAdmin, upload.single('image'), (req, res) => {
-    const { name, category, purchase_price, sale_price, quantity, min_stock, barcode } = req.body;
+    const { name, category, purchase_price, sale_price, quantity, min_stock, barcode, product_type } = req.body;
+    const productType = product_type === 'service' ? 'service' : 'product';
+    const isService   = productType === 'service';
 
     if (!name || !sale_price)
         return res.status(400).json({ error: 'Nom et prix de vente requis' });
 
-    const image = req.file ? '/uploads/' + req.file.filename : null;
-    const now   = getMadagascarDateTime();
+    const image  = req.file ? '/uploads/' + req.file.filename : null;
+    const now    = getMadagascarDateTime();
+    const finalQty      = isService ? 0 : (parseInt(quantity) || 0);
+    const finalMinStock = isService ? 0 : (parseInt(min_stock) || 5);
 
     db.run(
         `INSERT INTO products
-            (name, category, purchase_price, sale_price, quantity, min_stock, image, barcode, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            (name, category, purchase_price, sale_price, quantity, min_stock, image, barcode, product_type, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [name, category || '', purchase_price || 0, sale_price,
-         quantity || 0, min_stock || 5, image, barcode || '', now, now],
+         finalQty, finalMinStock, image, barcode || '', productType, now, now],
         function(err) {
             if (err) return res.status(500).json({ error: err.message });
 
             const productId = this.lastID;
 
-            // Mouvement stock initial
-            if (quantity && parseInt(quantity) > 0) {
+            // Mouvement stock initial — seulement pour les produits
+            if (!isService && finalQty > 0) {
                 db.run(
                     `INSERT INTO stock_movements
                         (product_id, product_name, movement_type, quantity, reason, user_id, created_at)
                      VALUES (?, ?, 'entry', ?, 'Stock initial', ?, ?)`,
-                    [productId, name, parseInt(quantity), req.session.user.id, now]
+                    [productId, name, finalQty, req.session.user.id, now]
                 );
             }
 
@@ -474,7 +481,8 @@ app.post('/api/products', requireAuth, requireAdmin, upload.single('image'), (re
 
 // ── PUT /api/products/:id — Modification ────────────────────
 app.put('/api/products/:id', requireAuth, requireAdmin, upload.single('image'), (req, res) => {
-    const { name, category, purchase_price, sale_price, quantity, min_stock, barcode } = req.body;
+    const { name, category, purchase_price, sale_price, quantity, min_stock, barcode, product_type } = req.body;
+    const productType = product_type ? (product_type === 'service' ? 'service' : 'product') : null;
     const now = getMadagascarDateTime();
 
     db.get('SELECT * FROM products WHERE id = ?', [req.params.id], (err, oldProduct) => {
@@ -484,22 +492,28 @@ app.put('/api/products/:id', requireAuth, requireAdmin, upload.single('image'), 
         let image = oldProduct.image;
         if (req.file) image = '/uploads/' + req.file.filename;
 
+        const isService = productType ? productType === 'service' : (oldProduct.product_type === 'service');
         const newQty = parseInt(quantity) || 0;
         const oldQty = oldProduct.quantity || 0;
 
+        const finalNewQty  = isService ? 0 : newQty;
+        const finalMinStock= isService ? 0 : (parseInt(min_stock) || 5);
+
         db.run(
             `UPDATE products
-             SET name = ?, category = ?, purchase_price = ?, sale_price = ?,
-                 quantity = ?, min_stock = ?, image = ?, barcode = ?, updated_at = ?
-             WHERE id = ?`,
+             SET name=?, category=?, purchase_price=?, sale_price=?,
+                 quantity=?, min_stock=?, image=?, barcode=?,
+                 product_type=COALESCE(?, product_type), updated_at=?
+             WHERE id=?`,
             [name, category || '', purchase_price || 0, sale_price,
-             newQty, min_stock || 5, image, barcode || '', now, req.params.id],
+             finalNewQty, finalMinStock, image, barcode || '',
+             productType, now, req.params.id],
             function(err) {
                 if (err) return res.status(500).json({ error: err.message });
 
-                // Mouvement stock si quantité changée
-                if (newQty !== oldQty) {
-                    const diff = newQty - oldQty;
+                // Mouvement stock si quantité changée (pas pour les services)
+                if (!isService && finalNewQty !== oldQty) {
+                    const diff = finalNewQty - oldQty;
                     const type = diff > 0 ? 'entry' : 'exit';
                     db.run(
                         `INSERT INTO stock_movements
@@ -739,6 +753,8 @@ app.post('/api/sales', requireAuth, (req, res) => {
                          VALUES (?, ?, ?, ?, ?, ?)`,
                         [saleId, item.id, item.name, item.quantity, item.price, item.quantity * item.price]
                     );
+                    // Ne pas décrémenter le stock pour les services
+                    if (item.product_type === 'service') return;
                     db.run(
                         'UPDATE products SET quantity = quantity - ?, updated_at = ? WHERE id = ?',
                         [item.quantity, now, item.id]
