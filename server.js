@@ -1,85 +1,20 @@
 'use strict';
 
 // ============================================================
-//  TECHFLOW POS — Production (Render + Supabase PostgreSQL)
-//  Port: process.env.PORT | Timezone: Madagascar (UTC+3)
+//  TECHFLOW POS — Server complet + SSE Real-Time
+//  Port: 5000 | Timezone: Madagascar (UTC+3)
 // ============================================================
 
-const express     = require('express');
-const bcrypt      = require('bcryptjs');
-const session     = require('express-session');
-const pgSession   = require('connect-pg-simple')(session);
-const multer      = require('multer');
-const path        = require('path');
-const { Pool }    = require('pg');
-const { createClient } = require('@supabase/supabase-js');
+const express = require('express');
+const sqlite3 = require('sqlite3').verbose();
+const bcrypt  = require('bcryptjs');
+const session = require('express-session');
+const multer  = require('multer');
+const path    = require('path');
+const fs      = require('fs');
 
 const app  = express();
-const PORT = process.env.PORT || 5000;
-
-// ============================================================
-//  SUPABASE STORAGE CLIENT
-// ============================================================
-const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_KEY
-);
-const BUCKET = process.env.SUPABASE_BUCKET || 'uploads';
-
-async function uploadToSupabase(file) {
-    const ext      = path.extname(file.originalname);
-    const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-    const { error } = await supabase.storage
-        .from(BUCKET)
-        .upload(filename, file.buffer, { contentType: file.mimetype, upsert: false });
-    if (error) throw new Error('Upload Supabase: ' + error.message);
-    const { data } = supabase.storage.from(BUCKET).getPublicUrl(filename);
-    return data.publicUrl;
-}
-
-// ============================================================
-//  POSTGRESQL POOL
-// ============================================================
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
-});
-
-// Helper: promisified query
-function dbQuery(sql, params = []) {
-    // Convert SQLite ? placeholders to PostgreSQL $1,$2...
-    let i = 0;
-    const pgSql = sql.replace(/\?/g, () => `$${++i}`);
-    return pool.query(pgSql, params);
-}
-
-// Simulate SQLite-style callbacks for compatibility
-const db = {
-    get: (sql, params, cb) => {
-        if (typeof params === 'function') { cb = params; params = []; }
-        dbQuery(sql, params)
-            .then(r => cb(null, r.rows[0] || null))
-            .catch(e => cb(e));
-    },
-    all: (sql, params, cb) => {
-        if (typeof params === 'function') { cb = params; params = []; }
-        dbQuery(sql, params)
-            .then(r => cb(null, r.rows))
-            .catch(e => cb(e));
-    },
-    run: (sql, params, cb) => {
-        if (typeof params === 'function') { cb = params; params = []; }
-        // Convert AUTOINCREMENT → SERIAL (already done in CREATE TABLE)
-        dbQuery(sql, params)
-            .then(r => {
-                // Simulate this.lastID for INSERT RETURNING id
-                const lastID = r.rows && r.rows[0] ? r.rows[0].id : null;
-                if (typeof cb === 'function') cb.call({ lastID, changes: r.rowCount }, null);
-            })
-            .catch(e => { if (typeof cb === 'function') cb(e); else console.error('DB error:', e); });
-    },
-    serialize: (fn) => fn(),
-};
+const PORT = 5000;
 
 // ============================================================
 //  MADAGASCAR TIMEZONE HELPERS
@@ -144,169 +79,160 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 app.use(session({
-    store: new pgSession({ pool, tableName: 'session' }),
-    secret: process.env.SESSION_SECRET || 'techflow_secret_2024',
+    secret: 'orion_pos_secret_key_2024',
     resave: false,
     saveUninitialized: false,
-    cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-        sameSite: 'lax',
-        maxAge: 24 * 60 * 60 * 1000
-    }
+    cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
 }));
 
-// ─── Multer memory → Supabase Storage ───────────────────────
-const upload = multer({ storage: multer.memoryStorage() });
+// ─── Multer (upload images) ─────────────────────────────────
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const dir = 'public/uploads';
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + '-' + Math.round(Math.random() * 1e9) + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage });
 
 // ============================================================
-//  INIT DATABASE (PostgreSQL / Supabase)
+//  DATABASE
 // ============================================================
-async function initDatabase() {
-    // Session table for connect-pg-simple
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS session (
-            sid    VARCHAR      NOT NULL COLLATE "default",
-            sess   JSON         NOT NULL,
-            expire TIMESTAMP(6) NOT NULL,
-            CONSTRAINT session_pkey PRIMARY KEY (sid)
-        )
-    `).catch(() => {});
-    await pool.query(`CREATE INDEX IF NOT EXISTS IDX_session_expire ON session (expire)`).catch(() => {});
+const db = new sqlite3.Database('./database.sqlite', err => {
+    if (err) console.error('❌ Erreur connexion DB:', err);
+    else     console.log('✅ Base de données connectée');
+});
 
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS users (
-            id         SERIAL PRIMARY KEY,
-            username   TEXT UNIQUE NOT NULL,
-            password   TEXT NOT NULL,
-            role       TEXT DEFAULT 'caissier',
-            full_name  TEXT,
-            created_at TEXT,
-            is_default INTEGER DEFAULT 0
-        )
-    `);
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS products (
-            id             SERIAL PRIMARY KEY,
-            name           TEXT NOT NULL,
-            category       TEXT,
-            purchase_price NUMERIC DEFAULT 0,
-            sale_price     NUMERIC NOT NULL,
-            quantity       INTEGER DEFAULT 0,
-            min_stock      INTEGER DEFAULT 5,
-            image          TEXT,
-            barcode        TEXT,
-            product_type   TEXT DEFAULT 'product',
-            created_at     TEXT,
-            updated_at     TEXT
-        )
-    `);
-    await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS product_type TEXT DEFAULT 'product'`).catch(() => {});
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS users (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        username   TEXT    UNIQUE NOT NULL,
+        password   TEXT    NOT NULL,
+        role       TEXT    DEFAULT 'caissier',
+        full_name  TEXT,
+        created_at TEXT,
+        is_default INTEGER DEFAULT 0
+    )`);
 
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS clients (
-            id         SERIAL PRIMARY KEY,
-            name       TEXT NOT NULL,
-            phone      TEXT,
-            email      TEXT,
-            address    TEXT,
-            created_at TEXT
-        )
-    `);
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS sales (
-            id             SERIAL PRIMARY KEY,
-            invoice_number TEXT UNIQUE NOT NULL,
-            client_id      INTEGER,
-            user_id        INTEGER,
-            subtotal       NUMERIC,
-            discount_type  TEXT,
-            discount_value NUMERIC DEFAULT 0,
-            total          NUMERIC,
-            payment_method TEXT DEFAULT 'cash',
-            created_at     TEXT
-        )
-    `);
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS sale_items (
-            id           SERIAL PRIMARY KEY,
-            sale_id      INTEGER,
-            product_id   INTEGER,
-            product_name TEXT,
-            quantity     INTEGER,
-            unit_price   NUMERIC,
-            total        NUMERIC
-        )
-    `);
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS stock_movements (
-            id            SERIAL PRIMARY KEY,
-            product_id    INTEGER,
-            product_name  TEXT,
-            movement_type TEXT,
-            quantity      INTEGER,
-            reason        TEXT,
-            user_id       INTEGER,
-            created_at    TEXT
-        )
-    `);
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS expenses (
-            id          SERIAL PRIMARY KEY,
-            description TEXT NOT NULL,
-            amount      NUMERIC NOT NULL,
-            type        TEXT DEFAULT 'realized',
-            category    TEXT,
-            status      TEXT DEFAULT 'pending',
-            created_at  TEXT
-        )
-    `);
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS financial_goals (
-            id             SERIAL PRIMARY KEY,
-            name           TEXT NOT NULL,
-            target_amount  NUMERIC NOT NULL,
-            current_amount NUMERIC DEFAULT 0,
-            deadline       TEXT,
-            status         TEXT DEFAULT 'active',
-            created_at     TEXT
-        )
-    `);
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS company_config (
-            id             INTEGER PRIMARY KEY,
-            name           TEXT DEFAULT 'TechFlow POS',
-            logo           TEXT,
-            address        TEXT,
-            phone          TEXT,
-            email          TEXT,
-            website        TEXT,
-            invoice_header TEXT,
-            invoice_footer TEXT DEFAULT 'Misaotra tompoko!',
-            currency       TEXT DEFAULT 'Ar',
-            tax_rate       NUMERIC DEFAULT 0
-        )
-    `);
+    db.run(`CREATE TABLE IF NOT EXISTS products (
+        id             INTEGER PRIMARY KEY AUTOINCREMENT,
+        name           TEXT    NOT NULL,
+        category       TEXT,
+        purchase_price REAL    DEFAULT 0,
+        sale_price     REAL    NOT NULL,
+        quantity       INTEGER DEFAULT 0,
+        min_stock      INTEGER DEFAULT 5,
+        image          TEXT,
+        barcode        TEXT,
+        created_at     TEXT,
+        updated_at     TEXT
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS clients (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        name       TEXT NOT NULL,
+        phone      TEXT,
+        email      TEXT,
+        address    TEXT,
+        created_at TEXT
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS sales (
+        id             INTEGER PRIMARY KEY AUTOINCREMENT,
+        invoice_number TEXT UNIQUE NOT NULL,
+        client_id      INTEGER,
+        user_id        INTEGER,
+        subtotal       REAL,
+        discount_type  TEXT,
+        discount_value REAL    DEFAULT 0,
+        total          REAL,
+        payment_method TEXT    DEFAULT 'cash',
+        created_at     TEXT,
+        FOREIGN KEY (client_id) REFERENCES clients(id),
+        FOREIGN KEY (user_id)   REFERENCES users(id)
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS sale_items (
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        sale_id      INTEGER,
+        product_id   INTEGER,
+        product_name TEXT,
+        quantity     INTEGER,
+        unit_price   REAL,
+        total        REAL,
+        FOREIGN KEY (sale_id)    REFERENCES sales(id),
+        FOREIGN KEY (product_id) REFERENCES products(id)
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS stock_movements (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        product_id    INTEGER,
+        product_name  TEXT,
+        movement_type TEXT,
+        quantity      INTEGER,
+        reason        TEXT,
+        user_id       INTEGER,
+        created_at    TEXT,
+        FOREIGN KEY (product_id) REFERENCES products(id),
+        FOREIGN KEY (user_id)    REFERENCES users(id)
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS expenses (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        description TEXT NOT NULL,
+        amount      REAL NOT NULL,
+        type        TEXT DEFAULT 'realized',
+        category    TEXT,
+        status      TEXT DEFAULT 'pending',
+        created_at  TEXT
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS financial_goals (
+        id             INTEGER PRIMARY KEY AUTOINCREMENT,
+        name           TEXT NOT NULL,
+        target_amount  REAL NOT NULL,
+        current_amount REAL DEFAULT 0,
+        deadline       TEXT,
+        status         TEXT DEFAULT 'active',
+        created_at     TEXT
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS company_config (
+        id             INTEGER PRIMARY KEY,
+        name           TEXT DEFAULT 'ORION POS',
+        logo           TEXT,
+        address        TEXT,
+        phone          TEXT,
+        email          TEXT,
+        website        TEXT,
+        invoice_header TEXT,
+        invoice_footer TEXT DEFAULT 'Misaotra tompoko!',
+        currency       TEXT DEFAULT 'Ar',
+        tax_rate       REAL DEFAULT 0
+    )`);
 
     // Admin par défaut
-    const defaultPwd = bcrypt.hashSync('admin_26', 10);
+    const defaultPassword = bcrypt.hashSync('admin_26', 10);
     const now = getMadagascarDateTime();
-    await pool.query(
-        `INSERT INTO users (username, password, role, full_name, is_default, created_at)
-         VALUES ($1,$2,'admin','Administrateur',1,$3)
-         ON CONFLICT (username) DO NOTHING`,
-        ['admin', defaultPwd, now]
-    );
-    await pool.query(
-        `INSERT INTO company_config (id, name) VALUES (1,'TechFlow POS') ON CONFLICT (id) DO NOTHING`
-    );
-    console.log('✅ Base de données initialisée (PostgreSQL)');
-}
+    db.run(`INSERT OR IGNORE INTO users (username, password, role, full_name, is_default, created_at)
+            VALUES ('admin', ?, 'admin', 'Administrateur', 1, ?)`, [defaultPassword, now]);
+    db.run(`INSERT OR IGNORE INTO company_config (id, name) VALUES (1, 'ORION POS')`);
+});
+
+// ─── Helper : lit un produit public et le broadcast ─────────
 function broadcastProduct(event, productId) {
-    pool.query(
-        'SELECT id, name, category, sale_price, quantity, min_stock, image, barcode, product_type FROM products WHERE id = $1',
-        [productId]
-    ).then(r => { if (r.rows[0]) broadcast(event, r.rows[0]); }).catch(() => {});
+    db.get(
+        `SELECT id, name, category, sale_price, quantity, min_stock, image, barcode
+         FROM products WHERE id = ?`,
+        [productId],
+        (err, product) => {
+            if (err || !product) return;
+            broadcast(event, product);
+        }
+    );
 }
 
 // ============================================================
@@ -375,7 +301,7 @@ app.get('/api/public/categories', (req, res) => {
 // ============================================================
 //  AUTH ROUTES
 // ============================================================
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     if (!username || !password)
         return res.status(400).json({ error: 'Identifiant et mot de passe requis' });
@@ -389,10 +315,7 @@ app.post('/api/login', async (req, res) => {
                 id: user.id, username: user.username,
                 role: user.role, full_name: user.full_name
             };
-            req.session.save(err => {
-                if (err) return res.status(500).json({ error: 'Session error' });
-                res.json({ success: true, user: req.session.user });
-            });
+            res.json({ success: true, user: req.session.user });
         } else {
             res.status(401).json({ error: 'Identifiants incorrects' });
         }
@@ -423,7 +346,7 @@ app.get('/api/users', requireAuth, requireAdmin, (req, res) => {
     );
 });
 
-app.post('/api/users', requireAuth, requireAdmin, async (req, res) => {
+app.post('/api/users', requireAuth, requireAdmin, (req, res) => {
     const { username, password, role, full_name } = req.body;
     if (!username || !password)
         return res.status(400).json({ error: "Nom d'utilisateur et mot de passe requis" });
@@ -490,7 +413,7 @@ app.delete('/api/users/:id', requireAuth, requireAdmin, (req, res) => {
 app.get('/api/products', requireAuth, (req, res) => {
     const fields = req.session.user.role === 'admin'
         ? '*'
-        : 'id, name, category, sale_price, quantity, min_stock, image, barcode, product_type';
+        : 'id, name, category, sale_price, quantity, min_stock, image, barcode';
 
     db.all(`SELECT ${fields} FROM products ORDER BY name`, [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -501,7 +424,7 @@ app.get('/api/products', requireAuth, (req, res) => {
 app.get('/api/products/:id', requireAuth, (req, res) => {
     const fields = req.session.user.role === 'admin'
         ? '*'
-        : 'id, name, category, sale_price, quantity, min_stock, image, barcode, product_type';
+        : 'id, name, category, sale_price, quantity, min_stock, image, barcode';
 
     db.get(`SELECT ${fields} FROM products WHERE id = ?`, [req.params.id], (err, row) => {
         if (err)  return res.status(500).json({ error: err.message });
@@ -511,92 +434,149 @@ app.get('/api/products/:id', requireAuth, (req, res) => {
 });
 
 // ── POST /api/products — Création ───────────────────────────
-app.post('/api/products', requireAuth, requireAdmin, upload.single('image'), async (req, res) => {
-    const { name, category, purchase_price, sale_price, quantity, min_stock, barcode, product_type } = req.body;
-    const productType = product_type === 'service' ? 'service' : 'product';
-    const isService   = productType === 'service';
+app.post('/api/products', requireAuth, requireAdmin, upload.single('image'), (req, res) => {
+    const { name, category, purchase_price, sale_price, quantity, min_stock, barcode } = req.body;
 
     if (!name || !sale_price)
         return res.status(400).json({ error: 'Nom et prix de vente requis' });
 
-    let image = null;
-    if (req.file) {
-        try { image = await uploadToSupabase(req.file); }
-        catch(e) { return res.status(500).json({ error: 'Erreur upload image: ' + e.message }); }
-    }
-    const now    = getMadagascarDateTime();
-    const finalQty      = isService ? 0 : (parseInt(quantity) || 0);
-    const finalMinStock = isService ? 0 : (parseInt(min_stock) || 5);
+    const image = req.file ? '/uploads/' + req.file.filename : null;
+    const now   = getMadagascarDateTime();
 
-    dbQuery(
+    db.run(
         `INSERT INTO products
-            (name, category, purchase_price, sale_price, quantity, min_stock, image, barcode, product_type, created_at, updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
+            (name, category, purchase_price, sale_price, quantity, min_stock, image, barcode, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [name, category || '', purchase_price || 0, sale_price,
-         finalQty, finalMinStock, image, barcode || '', productType, now, now]
-    ).then(async result => {
-            const productId = result.rows[0].id;
+         quantity || 0, min_stock || 5, image, barcode || '', now, now],
+        function(err) {
+            if (err) return res.status(500).json({ error: err.message });
 
-            // Mouvement stock initial — seulement pour les produits
-            if (!isService && finalQty > 0) {
+            const productId = this.lastID;
+
+            // Mouvement stock initial
+            if (quantity && parseInt(quantity) > 0) {
                 db.run(
                     `INSERT INTO stock_movements
                         (product_id, product_name, movement_type, quantity, reason, user_id, created_at)
                      VALUES (?, ?, 'entry', ?, 'Stock initial', ?, ?)`,
-                    [productId, name, finalQty, req.session.user.id, now]
+                    [productId, name, parseInt(quantity), req.session.user.id, now]
                 );
             }
 
             // ⚡ SSE — nouveau produit pour le catalog
             broadcastProduct('product:new', productId);
+
             res.json({ id: productId, success: true });
-        }).catch(err => res.status(500).json({ error: err.message }));
+        }
+    );
 });
 
 // ── PUT /api/products/:id — Modification ────────────────────
-app.put('/api/products/:id', requireAuth, requireAdmin, upload.single('image'), async (req, res) => {
-    const { name, category, purchase_price, sale_price, quantity, min_stock, barcode, product_type } = req.body;
-    const productType = product_type ? (product_type === 'service' ? 'service' : 'product') : null;
+app.put('/api/products/:id', requireAuth, requireAdmin, upload.single('image'), (req, res) => {
+    const { name, category, purchase_price, sale_price, quantity, min_stock, barcode } = req.body;
     const now = getMadagascarDateTime();
 
-    try {
-        const result = await dbQuery('SELECT * FROM products WHERE id = $1', [req.params.id]);
-        const oldProduct = result.rows[0];
+    db.get('SELECT * FROM products WHERE id = ?', [req.params.id], (err, oldProduct) => {
+        if (err)         return res.status(500).json({ error: err.message });
         if (!oldProduct) return res.status(404).json({ error: 'Produit non trouvé' });
 
         let image = oldProduct.image;
-        if (req.file) image = await uploadToSupabase(req.file);
+        if (req.file) image = '/uploads/' + req.file.filename;
 
-        const isService = productType ? productType === 'service' : (oldProduct.product_type === 'service');
         const newQty = parseInt(quantity) || 0;
         const oldQty = oldProduct.quantity || 0;
-        const finalNewQty   = isService ? 0 : newQty;
-        const finalMinStock = isService ? 0 : (parseInt(min_stock) || 5);
 
-        await dbQuery(
+        db.run(
             `UPDATE products
-             SET name=$1, category=$2, purchase_price=$3, sale_price=$4,
-                 quantity=$5, min_stock=$6, image=$7, barcode=$8,
-                 product_type=COALESCE($9, product_type), updated_at=$10
-             WHERE id=$11`,
+             SET name = ?, category = ?, purchase_price = ?, sale_price = ?,
+                 quantity = ?, min_stock = ?, image = ?, barcode = ?, updated_at = ?
+             WHERE id = ?`,
             [name, category || '', purchase_price || 0, sale_price,
-             finalNewQty, finalMinStock, image, barcode || '',
-             productType, now, req.params.id]
+             newQty, min_stock || 5, image, barcode || '', now, req.params.id],
+            function(err) {
+                if (err) return res.status(500).json({ error: err.message });
+
+                // Mouvement stock si quantité changée
+                if (newQty !== oldQty) {
+                    const diff = newQty - oldQty;
+                    const type = diff > 0 ? 'entry' : 'exit';
+                    db.run(
+                        `INSERT INTO stock_movements
+                            (product_id, product_name, movement_type, quantity, reason, user_id, created_at)
+                         VALUES (?, ?, ?, ?, 'Ajustement admin', ?, ?)`,
+                        [req.params.id, name, type, Math.abs(diff), req.session.user.id, now]
+                    );
+                }
+
+                // ⚡ SSE — mise à jour produit (stock, sary, anarana, vidiny)
+                broadcastProduct('product:update', parseInt(req.params.id));
+
+                res.json({ success: true });
+            }
         );
-        // Mouvement stock si quantité changée (pas pour les services)
-        if (!isService && finalNewQty !== oldQty) {
-            const diff = finalNewQty - oldQty;
-            const mvtType = diff > 0 ? 'entry' : 'exit';
-            await dbQuery(
-                `INSERT INTO stock_movements (product_id, product_name, movement_type, quantity, reason, user_id, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-                [req.params.id, name, mvtType, Math.abs(diff), 'Ajustement stock', req.session.user.id, now]
-            );
-        }
-        broadcastProduct('product:update', parseInt(req.params.id));
+    });
+});
+
+// ── DELETE /api/products/:id ─────────────────────────────────
+app.delete('/api/products/:id', requireAuth, requireAdmin, (req, res) => {
+    const id = parseInt(req.params.id);
+
+    db.run('DELETE FROM products WHERE id = ?', [id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+
+        // ⚡ SSE — produit supprimé
+        broadcast('product:delete', { id });
+
         res.json({ success: true });
-    } catch(err) {
-        res.status(500).json({ error: err.message });
-    }
+    });
+});
+
+// ── POST /api/products/:id/add-stock — Réapprovisionnement ──
+app.post('/api/products/:id/add-stock', requireAuth, (req, res) => {
+    const { quantity } = req.body;
+    const now = getMadagascarDateTime();
+
+    if (!quantity || parseInt(quantity) <= 0)
+        return res.status(400).json({ error: 'Quantité invalide' });
+
+    db.get('SELECT * FROM products WHERE id = ?', [req.params.id], (err, product) => {
+        if (err)      return res.status(500).json({ error: err.message });
+        if (!product) return res.status(404).json({ error: 'Produit non trouvé' });
+
+        const addQty    = parseInt(quantity);
+        const newQty    = (product.quantity || 0) + addQty;
+
+        db.run(
+            'UPDATE products SET quantity = ?, updated_at = ? WHERE id = ?',
+            [newQty, now, req.params.id],
+            function(err) {
+                if (err) return res.status(500).json({ error: err.message });
+
+                db.run(
+                    `INSERT INTO stock_movements
+                        (product_id, product_name, movement_type, quantity, reason, user_id, created_at)
+                     VALUES (?, ?, 'entry', ?, 'Réapprovisionnement', ?, ?)`,
+                    [req.params.id, product.name, addQty, req.session.user.id, now]
+                );
+
+                // ⚡ SSE — stock mis à jour
+                broadcastProduct('product:update', parseInt(req.params.id));
+
+                res.json({ success: true, newQuantity: newQty });
+            }
+        );
+    });
+});
+
+// ============================================================
+//  CLIENTS ROUTES
+// ============================================================
+app.get('/api/clients', requireAuth, (req, res) => {
+    db.all('SELECT * FROM clients ORDER BY name', [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
 });
 
 app.get('/api/clients/:id', requireAuth, (req, res) => {
@@ -619,7 +599,7 @@ app.get('/api/clients/:id', requireAuth, (req, res) => {
     });
 });
 
-app.post('/api/clients', requireAuth, async (req, res) => {
+app.post('/api/clients', requireAuth, (req, res) => {
     const { name, phone, email, address } = req.body;
     if (!name) return res.status(400).json({ error: 'Le nom est requis' });
 
@@ -675,8 +655,8 @@ app.get('/api/sales', requireAuth, (req, res) => {
     const today = getMadagascarDate();
     let filter = '';
     if (period === 'today') filter = `AND DATE(s.created_at) = '${today}'`;
-    else if (period === 'week')  filter = `AND DATE(s.created_at) >= (CURRENT_DATE - INTERVAL '7 days')::text`;
-    else if (period === 'month') filter = `AND DATE(s.created_at) >= (CURRENT_DATE - INTERVAL '30 days')::text`;
+    else if (period === 'week')  filter = `AND DATE(s.created_at) >= DATE('${today}', '-7 days')`;
+    else if (period === 'month') filter = `AND DATE(s.created_at) >= DATE('${today}', '-30 days')`;
 
     db.all(
         `SELECT s.*, c.name as client_name, u.username as user_name, u.full_name as user_full_name
@@ -714,7 +694,7 @@ app.get('/api/sales/:id', requireAuth, (req, res) => {
     );
 });
 
-app.post('/api/sales', requireAuth, async (req, res) => {
+app.post('/api/sales', requireAuth, (req, res) => {
     const { client_id, client_name, client_phone, items,
             subtotal, discount_type, discount_value, total, payment_method } = req.body;
 
@@ -743,7 +723,7 @@ app.post('/api/sales', requireAuth, async (req, res) => {
         db.run(
             `INSERT INTO sales
                 (invoice_number, client_id, user_id, subtotal, discount_type, discount_value, total, payment_method, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [invoice_number, finalClientId, req.session.user.id,
              subtotal, discount_type || 'percent', discount_value || 0,
              total, payment_method || 'cash', now],
@@ -759,8 +739,6 @@ app.post('/api/sales', requireAuth, async (req, res) => {
                          VALUES (?, ?, ?, ?, ?, ?)`,
                         [saleId, item.id, item.name, item.quantity, item.price, item.quantity * item.price]
                     );
-                    // Ne pas décrémenter le stock pour les services
-                    if (item.product_type === 'service') return;
                     db.run(
                         'UPDATE products SET quantity = quantity - ?, updated_at = ? WHERE id = ?',
                         [item.quantity, now, item.id]
@@ -838,8 +816,8 @@ app.get('/api/stock-movements', requireAuth, (req, res) => {
     const today = getMadagascarDate();
     let filter = '';
     if (period === 'today') filter = `WHERE DATE(sm.created_at) = '${today}'`;
-    else if (period === 'week')  filter = `WHERE DATE(sm.created_at) >= (CURRENT_DATE - INTERVAL '7 days')::text`;
-    else if (period === 'month') filter = `WHERE DATE(sm.created_at) >= (CURRENT_DATE - INTERVAL '30 days')::text`;
+    else if (period === 'week')  filter = `WHERE DATE(sm.created_at) >= DATE('${today}', '-7 days')`;
+    else if (period === 'month') filter = `WHERE DATE(sm.created_at) >= DATE('${today}', '-30 days')`;
 
     db.all(
         `SELECT sm.*, u.username as user_name, u.full_name as user_full_name
@@ -855,7 +833,7 @@ app.get('/api/stock-movements', requireAuth, (req, res) => {
     );
 });
 
-app.post('/api/stock-movements', requireAuth, requireAdmin, async (req, res) => {
+app.post('/api/stock-movements', requireAuth, requireAdmin, (req, res) => {
     const { product_id, movement_type, quantity, reason } = req.body;
     const now = getMadagascarDateTime();
 
@@ -954,7 +932,7 @@ app.get('/api/dashboard/stats', requireAuth, requireAdmin, (req, res) => {
 
             db.get(
                 `SELECT COUNT(*) as count, COALESCE(SUM(total), 0) as revenue
-                 FROM sales WHERE DATE(created_at) >= (CURRENT_DATE - INTERVAL '30 days')::text`,
+                 FROM sales WHERE DATE(created_at) >= DATE('${today}', '-30 days')`,
                 [],
                 (err, monthData) => {
                     if (err) return res.status(500).json({ error: err.message });
@@ -973,7 +951,7 @@ app.get('/api/dashboard/stats', requireAuth, requireAdmin, (req, res) => {
                                  FROM sale_items si
                                  JOIN products p ON si.product_id = p.id
                                  JOIN sales    s ON si.sale_id    = s.id
-                                 WHERE DATE(s.created_at) >= (CURRENT_DATE - INTERVAL '30 days')::text`,
+                                 WHERE DATE(s.created_at) >= DATE('${today}', '-30 days')`,
                                 [],
                                 (err, saleItems) => {
                                     if (err) return res.status(500).json({ error: err.message });
@@ -988,7 +966,7 @@ app.get('/api/dashboard/stats', requireAuth, requireAdmin, (req, res) => {
                                         `SELECT COALESCE(SUM(amount), 0) as total
                                          FROM expenses
                                          WHERE status = 'validated'
-                                           AND DATE(created_at) >= (CURRENT_DATE - INTERVAL '30 days')::text`,
+                                           AND DATE(created_at) >= DATE('${today}', '-30 days')`,
                                         [],
                                         (err, expenses) => {
                                             if (err) return res.status(500).json({ error: err.message });
@@ -1033,7 +1011,7 @@ app.get('/api/dashboard/top-products', requireAuth, (req, res) => {
         `SELECT si.product_name, SUM(si.quantity) as total_sold, SUM(si.total) as revenue
          FROM sale_items si
          JOIN sales s ON si.sale_id = s.id
-         WHERE DATE(s.created_at) >= (CURRENT_DATE - INTERVAL '30 days')::text
+         WHERE DATE(s.created_at) >= DATE('${today}', '-30 days')
          GROUP BY si.product_id
          ORDER BY total_sold DESC
          LIMIT 10`,
@@ -1071,9 +1049,9 @@ function buildProfitDateFilter(period, start_date, end_date, today, alias = 's')
     if (start_date && end_date)
         return `WHERE DATE(${alias}.created_at) BETWEEN '${start_date}' AND '${end_date}'`;
     if (period === 'today')  return `WHERE DATE(${alias}.created_at) = '${today}'`;
-    if (period === 'week')   return `WHERE DATE(${alias}.created_at) >= (CURRENT_DATE - INTERVAL '7 days')::text`;
-    if (period === 'month')  return `WHERE DATE(${alias}.created_at) >= (CURRENT_DATE - INTERVAL '30 days')::text`;
-    if (period === 'year')   return `WHERE DATE(${alias}.created_at) >= (CURRENT_DATE - INTERVAL '365 days')::text`;
+    if (period === 'week')   return `WHERE DATE(${alias}.created_at) >= DATE('${today}', '-7 days')`;
+    if (period === 'month')  return `WHERE DATE(${alias}.created_at) >= DATE('${today}', '-30 days')`;
+    if (period === 'year')   return `WHERE DATE(${alias}.created_at) >= DATE('${today}', '-365 days')`;
     return ''; // 'all' = no filter
 }
 
@@ -1120,14 +1098,14 @@ app.get('/api/profits/summary', requireAuth, requireAdmin, (req, res) => {
             filter  = `WHERE DATE(s.created_at) = '${today}'`;
             groupBy = `DATE(s.created_at)`; break;
         case 'week':
-            filter  = `WHERE DATE(s.created_at) >= (CURRENT_DATE - INTERVAL '7 days')::text`;
+            filter  = `WHERE DATE(s.created_at) >= DATE('${today}', '-7 days')`;
             groupBy = `DATE(s.created_at)`; break;
         case 'month':
-            filter  = `WHERE DATE(s.created_at) >= (CURRENT_DATE - INTERVAL '30 days')::text`;
+            filter  = `WHERE DATE(s.created_at) >= DATE('${today}', '-30 days')`;
             groupBy = `DATE(s.created_at)`; break;
         case 'year':
-            filter  = `WHERE DATE(s.created_at) >= (CURRENT_DATE - INTERVAL '365 days')::text`;
-            groupBy = `TO_CHAR(s.created_at::date, 'YYYY-MM')`; break;
+            filter  = `WHERE DATE(s.created_at) >= DATE('${today}', '-365 days')`;
+            groupBy = `STRFTIME('%Y-%m', s.created_at)`; break;
         case 'custom':
             if (start_date && end_date) {
                 filter  = `WHERE DATE(s.created_at) BETWEEN '${start_date}' AND '${end_date}'`;
@@ -1138,7 +1116,7 @@ app.get('/api/profits/summary', requireAuth, requireAdmin, (req, res) => {
         case 'all':
         default:
             filter  = '';
-            groupBy = `TO_CHAR(s.created_at::date, 'YYYY-MM')`;
+            groupBy = `STRFTIME('%Y-%m', s.created_at)`;
     }
 
     db.all(
@@ -1341,7 +1319,7 @@ app.get('/api/products/:id/profit-details', requireAuth, requireAdmin, (req, res
          JOIN sales    s ON si.sale_id    = s.id
          LEFT JOIN products p ON si.product_id = p.id
          WHERE si.product_id = ?
-           AND DATE(s.created_at) >= (CURRENT_DATE - INTERVAL '30 days')::text
+           AND DATE(s.created_at) >= DATE('${today}', '-30 days')
          GROUP BY DATE(s.created_at)
          ORDER BY date DESC`,
         [req.params.id],
@@ -1371,7 +1349,7 @@ app.get('/api/expenses', requireAuth, requireAdmin, (req, res) => {
     });
 });
 
-app.post('/api/expenses', requireAuth, requireAdmin, async (req, res) => {
+app.post('/api/expenses', requireAuth, requireAdmin, (req, res) => {
     const { description, amount, type, category, status } = req.body;
     if (!description || !amount)
         return res.status(400).json({ error: 'Description et montant requis' });
@@ -1416,7 +1394,7 @@ app.get('/api/financial-goals', requireAuth, requireAdmin, (req, res) => {
     });
 });
 
-app.post('/api/financial-goals', requireAuth, requireAdmin, async (req, res) => {
+app.post('/api/financial-goals', requireAuth, requireAdmin, (req, res) => {
     const { name, target_amount, deadline } = req.body;
     if (!name || !target_amount)
         return res.status(400).json({ error: 'Nom et montant cible requis' });
@@ -1461,26 +1439,27 @@ app.get('/api/config', requireAuth, (req, res) => {
     });
 });
 
-app.put('/api/config', requireAuth, requireAdmin, upload.single('logo'), async (req, res) => {
+app.put('/api/config', requireAuth, requireAdmin, upload.single('logo'), (req, res) => {
     const { name, address, phone, email, website, invoice_header, invoice_footer, currency, tax_rate } = req.body;
-    try {
-        const current = await dbQuery('SELECT logo FROM company_config WHERE id = 1');
-        let logo = current.rows[0] ? current.rows[0].logo : null;
-        if (req.file) logo = await uploadToSupabase(req.file);
 
-        await dbQuery(
+    db.get('SELECT logo FROM company_config WHERE id = 1', [], (err, current) => {
+        let logo = current ? current.logo : null;
+        if (req.file) logo = '/uploads/' + req.file.filename;
+
+        db.run(
             `UPDATE company_config
-             SET name=$1, logo=$2, address=$3, phone=$4, email=$5,
-                 website=$6, invoice_header=$7, invoice_footer=$8, currency=$9, tax_rate=$10
-             WHERE id=1`,
-            [name || 'TechFlow POS', logo, address || '', phone || '', email || '',
+             SET name = ?, logo = ?, address = ?, phone = ?, email = ?,
+                 website = ?, invoice_header = ?, invoice_footer = ?, currency = ?, tax_rate = ?
+             WHERE id = 1`,
+            [name || 'ORION POS', logo, address || '', phone || '', email || '',
              website || '', invoice_header || '', invoice_footer || 'Misaotra tompoko!',
-             currency || 'Ar', tax_rate || 0]
+             currency || 'Ar', tax_rate || 0],
+            function(err) {
+                if (err) return res.status(500).json({ error: err.message });
+                res.json({ success: true });
+            }
         );
-        res.json({ success: true });
-    } catch(err) {
-        res.status(500).json({ error: err.message });
-    }
+    });
 });
 
 // ============================================================
@@ -1520,8 +1499,8 @@ app.get('/api/export/sales', requireAuth, (req, res) => {
     const today = getMadagascarDate();
     let filter = '';
     if (period === 'today') filter = `WHERE DATE(s.created_at) = '${today}'`;
-    else if (period === 'week')  filter = `WHERE DATE(s.created_at) >= (CURRENT_DATE - INTERVAL '7 days')::text`;
-    else if (period === 'month') filter = `WHERE DATE(s.created_at) >= (CURRENT_DATE - INTERVAL '30 days')::text`;
+    else if (period === 'week')  filter = `WHERE DATE(s.created_at) >= DATE('${today}', '-7 days')`;
+    else if (period === 'month') filter = `WHERE DATE(s.created_at) >= DATE('${today}', '-30 days')`;
 
     db.all(
         `SELECT s.invoice_number, s.created_at, c.name as client,
@@ -1550,7 +1529,7 @@ app.get('/api/export/stock-movements', requireAuth, (req, res) => {
     const today = getMadagascarDate();
     let filter = '';
     if (period === 'today') filter = `WHERE DATE(sm.created_at) = '${today}'`;
-    else if (period === 'month') filter = `WHERE DATE(sm.created_at) >= (CURRENT_DATE - INTERVAL '30 days')::text`;
+    else if (period === 'month') filter = `WHERE DATE(sm.created_at) >= DATE('${today}', '-30 days')`;
 
     db.all(
         `SELECT sm.created_at, sm.product_name, sm.movement_type, sm.quantity, sm.reason, u.full_name as utilisateur
@@ -1606,9 +1585,19 @@ app.get('/api/export/profits-products', requireAuth, requireAdmin, (req, res) =>
 // ============================================================
 //  START SERVER
 // ============================================================
-// ── Start ──
-initDatabase().then(() => {
-    app.listen(PORT, () => {
-        console.log(`\n✅ TechFlow POS démarré — Port ${PORT} — DB Supabase PostgreSQL\n`);
-    });
-}).catch(err => { console.error('❌ Init DB failed:', err); process.exit(1); });
+app.listen(PORT, () => {
+    console.log('');
+    console.log('════════════════════════════════════════════════════════════════');
+    console.log('   ████████╗███████╗ ██████╗██╗  ██╗███████╗██╗      ██████╗  ██╗    ██╗');
+    console.log('      ██╔══╝██╔════╝██╔════╝██║  ██║██╔════╝██║     ██╔═══██╗ ██║    ██║');
+    console.log('      ██║   █████╗  ██║     ███████║█████╗  ██║     ██║   ██║ ██║ █╗ ██║');
+    console.log('      ██║   ██╔══╝  ██║     ██╔══██║██╔══╝  ██║     ██║   ██║ ██║███╗██║');
+    console.log('      ██║   ███████╗╚██████╗██║  ██║██║     ███████╗╚██████╔╝ ╚███╔███╔╝');
+    console.log('════════════════════════════════════════════════════════════════');
+    console.log('');
+    console.log(`   ✅  Serveur démarré sur http://localhost:${PORT}`);
+    console.log(`   🌍  Timezone : Madagascar (UTC+3)`);
+    console.log(`   🕐  Date/Heure : ${getMadagascarDateTime()}`);
+    console.log(`   📡  SSE endpoint : /api/public/events`);
+    console.log('');
+});
