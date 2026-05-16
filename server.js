@@ -559,115 +559,44 @@ app.put('/api/products/:id', requireAuth, requireAdmin, upload.single('image'), 
     const productType = product_type ? (product_type === 'service' ? 'service' : 'product') : null;
     const now = getMadagascarDateTime();
 
-    db.get('SELECT * FROM products WHERE id = ?', [req.params.id], (err, oldProduct) => {
-        if (err)         return res.status(500).json({ error: err.message });
+    try {
+        const result = await dbQuery('SELECT * FROM products WHERE id = $1', [req.params.id]);
+        const oldProduct = result.rows[0];
         if (!oldProduct) return res.status(404).json({ error: 'Produit non trouvé' });
 
         let image = oldProduct.image;
-        if (req.file) {
-            try { image = await uploadToSupabase(req.file); }
-            catch(e) { return res.status(500).json({ error: 'Erreur upload image: ' + e.message }); }
-        }
+        if (req.file) image = await uploadToSupabase(req.file);
 
         const isService = productType ? productType === 'service' : (oldProduct.product_type === 'service');
         const newQty = parseInt(quantity) || 0;
         const oldQty = oldProduct.quantity || 0;
+        const finalNewQty   = isService ? 0 : newQty;
+        const finalMinStock = isService ? 0 : (parseInt(min_stock) || 5);
 
-        const finalNewQty  = isService ? 0 : newQty;
-        const finalMinStock= isService ? 0 : (parseInt(min_stock) || 5);
-
-        db.run(
+        await dbQuery(
             `UPDATE products
-             SET name=?, category=?, purchase_price=?, sale_price=?,
-                 quantity=?, min_stock=?, image=?, barcode=?,
-                 product_type=COALESCE(?, product_type), updated_at=?
-             WHERE id=?`,
+             SET name=$1, category=$2, purchase_price=$3, sale_price=$4,
+                 quantity=$5, min_stock=$6, image=$7, barcode=$8,
+                 product_type=COALESCE($9, product_type), updated_at=$10
+             WHERE id=$11`,
             [name, category || '', purchase_price || 0, sale_price,
              finalNewQty, finalMinStock, image, barcode || '',
-             productType, now, req.params.id],
-            function(err) {
-                if (err) return res.status(500).json({ error: err.message });
-
-                // Mouvement stock si quantité changée (pas pour les services)
-                if (!isService && finalNewQty !== oldQty) {
-                    const diff = finalNewQty - oldQty;
-                    const type = diff > 0 ? 'entry' : 'exit';
-                    db.run(
-                        `INSERT INTO stock_movements
-                            (product_id, product_name, movement_type, quantity, reason, user_id, created_at)
-                         VALUES (?, ?, ?, ?, 'Ajustement admin', ?, ?)`,
-                        [req.params.id, name, type, Math.abs(diff), req.session.user.id, now]
-                    );
-                }
-
-                // ⚡ SSE — mise à jour produit (stock, sary, anarana, vidiny)
-                broadcastProduct('product:update', parseInt(req.params.id));
-
-                res.json({ success: true });
-            }
+             productType, now, req.params.id]
         );
-    });
-});
-
-// ── DELETE /api/products/:id ─────────────────────────────────
-app.delete('/api/products/:id', requireAuth, requireAdmin, (req, res) => {
-    const id = parseInt(req.params.id);
-
-    db.run('DELETE FROM products WHERE id = ?', [id], function(err) {
-        if (err) return res.status(500).json({ error: err.message });
-
-        // ⚡ SSE — produit supprimé
-        broadcast('product:delete', { id });
-
+        // Mouvement stock si quantité changée (pas pour les services)
+        if (!isService && finalNewQty !== oldQty) {
+            const diff = finalNewQty - oldQty;
+            const mvtType = diff > 0 ? 'entry' : 'exit';
+            await dbQuery(
+                `INSERT INTO stock_movements (product_id, product_name, movement_type, quantity, reason, user_id, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+                [req.params.id, name, mvtType, Math.abs(diff), 'Ajustement stock', req.session.user.id, now]
+            );
+        }
+        broadcastProduct('product:update', parseInt(req.params.id));
         res.json({ success: true });
-    });
-});
-
-// ── POST /api/products/:id/add-stock — Réapprovisionnement ──
-app.post('/api/products/:id/add-stock', requireAuth, (req, res) => {
-    const { quantity } = req.body;
-    const now = getMadagascarDateTime();
-
-    if (!quantity || parseInt(quantity) <= 0)
-        return res.status(400).json({ error: 'Quantité invalide' });
-
-    db.get('SELECT * FROM products WHERE id = ?', [req.params.id], (err, product) => {
-        if (err)      return res.status(500).json({ error: err.message });
-        if (!product) return res.status(404).json({ error: 'Produit non trouvé' });
-
-        const addQty    = parseInt(quantity);
-        const newQty    = (product.quantity || 0) + addQty;
-
-        db.run(
-            'UPDATE products SET quantity = ?, updated_at = ? WHERE id = ?',
-            [newQty, now, req.params.id],
-            function(err) {
-                if (err) return res.status(500).json({ error: err.message });
-
-                db.run(
-                    `INSERT INTO stock_movements
-                        (product_id, product_name, movement_type, quantity, reason, user_id, created_at)
-                     VALUES (?, ?, 'entry', ?, 'Réapprovisionnement', ?, ?)`,
-                    [req.params.id, product.name, addQty, req.session.user.id, now]
-                );
-
-                // ⚡ SSE — stock mis à jour
-                broadcastProduct('product:update', parseInt(req.params.id));
-
-                res.json({ success: true, newQuantity: newQty });
-            }
-        );
-    });
-});
-
-// ============================================================
-//  CLIENTS ROUTES
-// ============================================================
-app.get('/api/clients', requireAuth, (req, res) => {
-    db.all('SELECT * FROM clients ORDER BY name', [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
-    });
+    } catch(err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 app.get('/api/clients/:id', requireAuth, (req, res) => {
@@ -1534,28 +1463,24 @@ app.get('/api/config', requireAuth, (req, res) => {
 
 app.put('/api/config', requireAuth, requireAdmin, upload.single('logo'), async (req, res) => {
     const { name, address, phone, email, website, invoice_header, invoice_footer, currency, tax_rate } = req.body;
+    try {
+        const current = await dbQuery('SELECT logo FROM company_config WHERE id = 1');
+        let logo = current.rows[0] ? current.rows[0].logo : null;
+        if (req.file) logo = await uploadToSupabase(req.file);
 
-    db.get('SELECT logo FROM company_config WHERE id = 1', [], (err, current) => {
-        let logo = current ? current.logo : null;
-        if (req.file) {
-            try { logo = await uploadToSupabase(req.file); }
-            catch(e) { return res.status(500).json({ error: 'Erreur upload logo: ' + e.message }); }
-        }
-
-        db.run(
+        await dbQuery(
             `UPDATE company_config
-             SET name = ?, logo = ?, address = ?, phone = ?, email = ?,
-                 website = ?, invoice_header = ?, invoice_footer = ?, currency = ?, tax_rate = ?
-             WHERE id = 1`,
-            [name || 'ORION POS', logo, address || '', phone || '', email || '',
+             SET name=$1, logo=$2, address=$3, phone=$4, email=$5,
+                 website=$6, invoice_header=$7, invoice_footer=$8, currency=$9, tax_rate=$10
+             WHERE id=1`,
+            [name || 'TechFlow POS', logo, address || '', phone || '', email || '',
              website || '', invoice_header || '', invoice_footer || 'Misaotra tompoko!',
-             currency || 'Ar', tax_rate || 0],
-            function(err) {
-                if (err) return res.status(500).json({ error: err.message });
-                res.json({ success: true });
-            }
+             currency || 'Ar', tax_rate || 0]
         );
-    });
+        res.json({ success: true });
+    } catch(err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // ============================================================
